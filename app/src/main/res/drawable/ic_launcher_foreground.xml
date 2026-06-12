@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    
+    <!-- Diagonal vector line representing direction of motion -->
+    <path
+        android:strokeColor="#4FD8EB"
+        android:strokeWidth="5"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M38,70 L70,38" />
+
+    <!-- Vector arrowhead -->
+    <path
+        android:strokeColor="#4FD8EB"
+        android:strokeWidth="5"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M54,38 L70,38 L70,54" />
+
+    <!-- Floating visual cue dots (offset to look dynamic) -->
+    <!-- Dot 1: r=4 at (32,42) -->
+    <path
+        android:fillColor="#A8EFFC"
+        android:pathData="M28,42 a4,4 0 1,0 8,0 a4,4 0 1,0 -8,0" />
+    
+    <!-- Dot 2: r=5 at (76,68) -->
+    <path
+        android:fillColor="#A8EFFC"
+        android:pathData="M71,68 a5,5 0 1,0 10,0 a5,5 0 1,0 -10,0" />
+    
+    <!-- Dot 3: r=4 at (54,76) -->
+    <path
+        android:fillColor="#4FD8EB"
+        android:pathData="M50,76 a4,4 0 1,0 8,0 a4,4 0 1,0 -8,0" />
+    
+    <!-- Dot 4: r=3 at (78,30) -->
+    <path
+        android:fillColor="#4FD8EB"
+        android:pathData="M75,30 a3,3 0 1,0 6,0 a3,3 0 1,0 -6,0" />
+    
+    <!-- Dot 5: r=3 at (44,56) -->
+    <path
+        android:fillColor="#A8EFFC"
+        android:pathData="M41,56 a3,3 0 1,0 6,0 a3,3 0 1,0 -6,0" />
+</vector>

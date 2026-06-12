@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Base application theme inheriting from the device's default dark/light action-barless theme -->
+    <style name="Theme.Vektor" parent="android:Theme.DeviceDefault.NoActionBar">
+        <!-- Transparent status and navigation bars to support edge-to-edge drawing in Compose -->
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+    </style>
+</resources>

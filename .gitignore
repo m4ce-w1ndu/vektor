@@ -1,0 +1,39 @@
+# Built artifacts
+*.apk
+*.aar
+*.ap_
+*.aab
+
+# Files and directories created by Gradle
+.gradle/
+build/
+app/build/
+
+# Local configuration files
+local.properties
+
+# Log files
+*.log
+
+# Android Studio and IntelliJ IDEA files
+.idea/
+*.iml
+*.ipr
+*.iws
+.navigation/
+captures/
+.externalNativeBuild/
+.cxx/
+
+# Keystore and signature files
+*.jks
+*.keystore
+*.pepk
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Kotlin-specific
+.kotlin/
+.gradle-kotlin-dsl-state/

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Vektor</string>
+    <string name="service_notification_channel_name">Vektor Motion Service</string>
+    <string name="service_notification_title">Vektor Active</string>
+    <string name="service_notification_description">Vektor is running to counter motion sickness cues.</string>
+</resources>
