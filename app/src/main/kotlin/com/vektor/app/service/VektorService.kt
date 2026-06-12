@@ -3,23 +3,21 @@ package com.vektor.app.service
 import android.app.Notification
 import android.app.PendingIntent
 import android.app.Service
-import android.content.Context
 import android.content.Intent
 import android.graphics.PixelFormat
 import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
-import android.os.Build
 import android.os.IBinder
 import android.view.Gravity
 import android.view.WindowManager
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Canvas
-import androidx.compose.runtime.getValue
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -39,7 +37,6 @@ import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 import com.vektor.app.MainActivity
 import com.vektor.app.R
 import com.vektor.app.VektorApplication
-import kotlin.math.sin
 
 class VektorService : Service(), LifecycleRegistryOwner, SavedStateRegistryOwner, ViewModelStoreOwner {
 
@@ -121,7 +118,7 @@ class VektorService : Service(), LifecycleRegistryOwner, SavedStateRegistryOwner
 
         isRunning = true
         loadSettings()
-        val prefs = getSharedPreferences("vektor_settings", Context.MODE_PRIVATE)
+        val prefs = getSharedPreferences("vektor_settings", MODE_PRIVATE)
         prefs.registerOnSharedPreferenceChangeListener(prefsListener)
         setupSensors()
         showOverlay()
@@ -146,7 +143,7 @@ class VektorService : Service(), LifecycleRegistryOwner, SavedStateRegistryOwner
         lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_DESTROY)
         
         // Unregister settings listener
-        val prefs = getSharedPreferences("vektor_settings", Context.MODE_PRIVATE)
+        val prefs = getSharedPreferences("vektor_settings", MODE_PRIVATE)
         prefs.unregisterOnSharedPreferenceChangeListener(prefsListener)
         
         // Unregister sensors
@@ -164,7 +161,7 @@ class VektorService : Service(), LifecycleRegistryOwner, SavedStateRegistryOwner
     }
 
     private fun loadSettings() {
-        val prefs = getSharedPreferences("vektor_settings", Context.MODE_PRIVATE)
+        val prefs = getSharedPreferences("vektor_settings", MODE_PRIVATE)
         dotSizePx.value = prefs.getFloat("dot_size", 16f)
         dotOpacity.value = prefs.getFloat("dot_opacity", 0.5f)
         sensitivity.value = prefs.getFloat("sensitivity", 20f)
@@ -173,7 +170,7 @@ class VektorService : Service(), LifecycleRegistryOwner, SavedStateRegistryOwner
     }
 
     private fun setupSensors() {
-        sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
+        sensorManager = getSystemService(SENSOR_SERVICE) as SensorManager
         accelerometer = sensorManager?.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
         gyroscope = sensorManager?.getDefaultSensor(Sensor.TYPE_GYROSCOPE)
 
@@ -183,17 +180,12 @@ class VektorService : Service(), LifecycleRegistryOwner, SavedStateRegistryOwner
     }
 
     private fun showOverlay() {
-        windowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
+        windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
 
         val params = WindowManager.LayoutParams(
             WindowManager.LayoutParams.MATCH_PARENT,
             WindowManager.LayoutParams.MATCH_PARENT,
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
-            } else {
-                @Suppress("DEPRECATION")
-                WindowManager.LayoutParams.TYPE_PHONE
-            },
+            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
                     WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE or
                     WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
