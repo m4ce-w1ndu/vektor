@@ -104,7 +104,7 @@ fun MainScreen(
     var dotSize by remember { mutableFloatStateOf(prefs.getFloat("dot_size", 16f)) }
     var dotOpacity by remember { mutableFloatStateOf(prefs.getFloat("dot_opacity", 0.5f)) }
     var sensitivity by remember { mutableFloatStateOf(prefs.getFloat("sensitivity", 20f)) }
-    var dotSpacing by remember { mutableIntStateOf(prefs.getInt("dot_spacing", 60)) }
+    var dotCount by remember { mutableIntStateOf(prefs.getInt("dot_count", 20)) }
     var dotColorHex by remember { mutableLongStateOf(prefs.getLong("dot_color", 0xFF4FD8EB)) }
 
     val colorsList = listOf(
@@ -315,7 +315,7 @@ fun MainScreen(
                                 dotSize = newValue
                                 prefs.edit().putFloat("dot_size", newValue).apply()
                             },
-                            valueRange = 10f..30f
+                            valueRange = 10f..60f
                         )
                     }
 
@@ -377,32 +377,32 @@ fun MainScreen(
                         )
                     }
 
-                    // Dot Spacing/Density Slider
+                    // Dot Count Slider
                     Column {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Text(
-                                text = "Dot Spacing",
+                                text = "Dot Count",
                                 fontSize = 14.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                             Text(
-                                text = "${dotSpacing} dp",
+                                text = "${dotCount} dots",
                                 fontSize = 13.sp,
                                 color = MaterialTheme.colorScheme.primary,
                                 fontWeight = FontWeight.SemiBold
                             )
                         }
                         Slider(
-                            value = dotSpacing.toFloat(),
+                            value = dotCount.toFloat(),
                             onValueChange = { newValue ->
-                                dotSpacing = newValue.roundToInt()
-                                prefs.edit().putInt("dot_spacing", newValue.roundToInt()).apply()
+                                dotCount = newValue.roundToInt()
+                                prefs.edit().putInt("dot_count", newValue.roundToInt()).apply()
                             },
-                            valueRange = 40f..100f
+                            valueRange = 10f..100f
                         )
                     }
                 }
