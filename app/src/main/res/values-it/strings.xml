@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Vektor</string>
+    <string name="service_notification_channel_name">Servizio di Movimento Vektor</string>
+    <string name="service_notification_title">Vektor Attivo</string>
+    <string name="service_notification_description">Vektor è in esecuzione per contrastare i segnali della chinetosi.</string>
+</resources>
