@@ -35,6 +35,8 @@ import androidx.compose.ui.unit.sp
 import com.vektor.app.service.VektorService
 import com.vektor.app.ui.theme.VektorTheme
 import kotlin.math.roundToInt
+import androidx.core.net.toUri
+import androidx.core.content.edit
 
 class MainActivity : ComponentActivity() {
 
@@ -65,7 +67,7 @@ class MainActivity : ComponentActivity() {
     private fun requestOverlayPermission() {
         val intent = Intent(
             Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-            Uri.parse("package:$packageName")
+            "package:$packageName".toUri()
         )
         startActivity(intent)
     }
@@ -77,11 +79,7 @@ class MainActivity : ComponentActivity() {
             isServiceRunningState.value = false
         } else {
             if (Settings.canDrawOverlays(this)) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    startForegroundService(intent)
-                } else {
-                    startService(intent)
-                }
+                startForegroundService(intent)
                 isServiceRunningState.value = true
             } else {
                 requestOverlayPermission()
@@ -283,7 +281,7 @@ fun MainScreen(
                                         )
                                         .clickable {
                                             dotColorHex = colorHex
-                                            prefs.edit().putLong("dot_color", colorHex).apply()
+                                            prefs.edit { putLong("dot_color", colorHex) }
                                         }
                                 )
                             }
@@ -313,7 +311,7 @@ fun MainScreen(
                             value = dotSize,
                             onValueChange = { newValue ->
                                 dotSize = newValue
-                                prefs.edit().putFloat("dot_size", newValue).apply()
+                                prefs.edit { putFloat("dot_size", newValue)}
                             },
                             valueRange = 10f..60f
                         )
@@ -342,7 +340,7 @@ fun MainScreen(
                             value = dotOpacity,
                             onValueChange = { newValue ->
                                 dotOpacity = newValue
-                                prefs.edit().putFloat("dot_opacity", newValue).apply()
+                                prefs.edit { putFloat("dot_opacity", newValue) }
                             },
                             valueRange = 0.1f..1.0f
                         )
@@ -371,7 +369,7 @@ fun MainScreen(
                             value = sensitivity,
                             onValueChange = { newValue ->
                                 sensitivity = newValue
-                                prefs.edit().putFloat("sensitivity", newValue).apply()
+                                prefs.edit { putFloat("sensitivity", newValue) }
                             },
                             valueRange = 5f..40f
                         )
@@ -400,7 +398,7 @@ fun MainScreen(
                             value = dotCount.toFloat(),
                             onValueChange = { newValue ->
                                 dotCount = newValue.roundToInt()
-                                prefs.edit().putInt("dot_count", newValue.roundToInt()).apply()
+                                prefs.edit { putInt("dot_count", newValue.roundToInt()) }
                             },
                             valueRange = 10f..100f
                         )
