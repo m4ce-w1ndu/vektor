@@ -61,24 +61,14 @@ class VektorService : Service(), LifecycleRegistryOwner, SavedStateRegistryOwner
     private var gyroscope: Sensor? = null
 
     // Configuration values (can be customized via SharedPreferences)
-    private var dotSizePx = 18f
-    private var dotColorValue = 0xFF4FD8EB
-    private var dotOpacity = 0.6f
-    private var sensitivity = 15f
-    private var dotSpacingDp = 60 // spacing between dots in grid
+    private val dotSizePx = mutableStateOf(18f)
+    private val dotColorValue = mutableStateOf(0xFF4FD8EB)
+    private val dotOpacity = mutableStateOf(0.6f)
+    private val sensitivity = mutableStateOf(15f)
+    private val dotSpacingDp = mutableStateOf(60)
 
     private val prefsListener = android.content.SharedPreferences.OnSharedPreferenceChangeListener { _, _ ->
         loadSettings()
-        overlayView?.setContent {
-            MotionOverlayCanvas(
-                offsetX = offsetX.value,
-                offsetY = offsetY.value,
-                dotSize = dotSizePx,
-                dotOpacity = dotOpacity,
-                dotSpacing = dotSpacingDp,
-                colorHex = dotColorValue
-            )
-        }
     }
 
     // Physics state
@@ -104,15 +94,15 @@ class VektorService : Service(), LifecycleRegistryOwner, SavedStateRegistryOwner
                     filteredAccY = filteredAccY + filterFactor * (rawY - filteredAccY)
 
                     // Update UI offset based on acceleration force
-                    // Moving relative to body: if accelerated right (negative rawX), dots drift left
-                    offsetX.value = filteredAccX * sensitivity
-                    offsetY.value = -filteredAccY * sensitivity // Invert Y to match screen coords
+                    // Oppose vehicle movement: if accelerated right (positive rawX), dots drift left (negative offsetX)
+                    offsetX.value = -filteredAccX * sensitivity.value
+                    offsetY.value = filteredAccY * sensitivity.value // Car forward (positive rawY) -> dots move down (positive offsetY)
                 }
                 Sensor.TYPE_GYROSCOPE -> {
                     // Gyroscope can be integrated here for rotational drift compensation
                     val rotZ = event.values[2] // rotation around Z axis
                     // Modify offsetX based on rotational velocity for centripetal correction
-                    offsetX.value += rotZ * sensitivity * 0.5f
+                    offsetX.value += rotZ * sensitivity.value * 0.5f
                 }
             }
         }
@@ -122,8 +112,9 @@ class VektorService : Service(), LifecycleRegistryOwner, SavedStateRegistryOwner
 
     override fun onCreate() {
         super.onCreate()
-        lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_CREATE)
+        controller.performAttach()
         controller.performRestore(null)
+        lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_CREATE)
 
         isRunning = true
         loadSettings()
@@ -171,11 +162,11 @@ class VektorService : Service(), LifecycleRegistryOwner, SavedStateRegistryOwner
 
     private fun loadSettings() {
         val prefs = getSharedPreferences("vektor_settings", Context.MODE_PRIVATE)
-        dotSizePx = prefs.getFloat("dot_size", 16f)
-        dotOpacity = prefs.getFloat("dot_opacity", 0.5f)
-        sensitivity = prefs.getFloat("sensitivity", 20f)
-        dotSpacingDp = prefs.getInt("dot_spacing", 60)
-        dotColorValue = prefs.getLong("dot_color", 0xFF4FD8EB).toFloat().toLong() // clean cast
+        dotSizePx.value = prefs.getFloat("dot_size", 16f)
+        dotOpacity.value = prefs.getFloat("dot_opacity", 0.5f)
+        sensitivity.value = prefs.getFloat("sensitivity", 20f)
+        dotSpacingDp.value = prefs.getInt("dot_spacing", 60)
+        dotColorValue.value = prefs.getLong("dot_color", 0xFF4FD8EB)
     }
 
     private fun setupSensors() {
@@ -218,10 +209,10 @@ class VektorService : Service(), LifecycleRegistryOwner, SavedStateRegistryOwner
                 MotionOverlayCanvas(
                     offsetX = offsetX.value,
                     offsetY = offsetY.value,
-                    dotSize = dotSizePx,
-                    dotOpacity = dotOpacity,
-                    dotSpacing = dotSpacingDp,
-                    colorHex = dotColorValue
+                    dotSize = dotSizePx.value,
+                    dotOpacity = dotOpacity.value,
+                    dotSpacing = dotSpacingDp.value,
+                    colorHex = dotColorValue.value
                 )
             }
         }
@@ -271,35 +262,32 @@ fun MotionOverlayCanvas(
         val width = size.width
         val height = size.height
 
-        // Calculate dynamic grid overlay based on dotSpacing
         val spacingPx = dotSpacing * density
-        val startX = -(spacingPx)
-        val startY = -(spacingPx)
+        
+        // Wrap offsets to stay within [0, spacingPx)
+        val gridOffsetX = offsetX % spacingPx
+        val gridOffsetY = offsetY % spacingPx
 
-        var x = startX
+        val exclusionRadiusPx = 180 * density
+        val exclusionRadiusSq = exclusionRadiusPx * exclusionRadiusPx
+
+        var x = -spacingPx
         while (x < width + spacingPx) {
-            var y = startY
+            var y = -spacingPx
             while (y < height + spacingPx) {
-                // Apply physics coordinate shifts (and wrap coordinates to fit screen layout)
-                val drawX = (x + offsetX) % spacingPx
-                val drawY = (y + offsetY) % spacingPx
+                val drawX = x + gridOffsetX
+                val drawY = y + gridOffsetY
                 
-                // Align wrapping grid properly
-                val finalX = if (drawX < 0) drawX + width + spacingPx else drawX
-                val finalY = if (drawY < 0) drawY + height + spacingPx else drawY
-
-                // Render dot at specific coordinates
-                // Only render dots outside the central screen area to avoid obstructing user's focal point
-                val dx = finalX - (width / 2)
-                val dy = finalY - (height / 2)
+                // Only render dots outside the central screen area
+                val dx = drawX - (width / 2)
+                val dy = drawY - (height / 2)
                 val distFromCenterSq = dx * dx + dy * dy
-                val exclusionRadiusPx = 180 * density // safe zone radius where dots are excluded
                 
-                if (distFromCenterSq > exclusionRadiusPx * exclusionRadiusPx) {
+                if (distFromCenterSq > exclusionRadiusSq) {
                     drawCircle(
                         color = finalColor,
                         radius = dotSize / 2,
-                        center = Offset(finalX, finalY)
+                        center = Offset(drawX, drawY)
                     )
                 }
                 y += spacingPx
