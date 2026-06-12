@@ -14,7 +14,10 @@ import android.os.Build
 import android.os.IBinder
 import android.view.Gravity
 import android.view.WindowManager
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Canvas
+import androidx.compose.runtime.getValue
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
@@ -65,7 +68,7 @@ class VektorService : Service(), LifecycleRegistryOwner, SavedStateRegistryOwner
     private val dotColorValue = mutableStateOf(0xFF4FD8EB)
     private val dotOpacity = mutableStateOf(0.6f)
     private val sensitivity = mutableStateOf(15f)
-    private val dotSpacingDp = mutableStateOf(60)
+    private val dotCount = mutableStateOf(20)
 
     private val prefsListener = android.content.SharedPreferences.OnSharedPreferenceChangeListener { _, _ ->
         loadSettings()
@@ -165,7 +168,7 @@ class VektorService : Service(), LifecycleRegistryOwner, SavedStateRegistryOwner
         dotSizePx.value = prefs.getFloat("dot_size", 16f)
         dotOpacity.value = prefs.getFloat("dot_opacity", 0.5f)
         sensitivity.value = prefs.getFloat("sensitivity", 20f)
-        dotSpacingDp.value = prefs.getInt("dot_spacing", 60)
+        dotCount.value = prefs.getInt("dot_count", 20)
         dotColorValue.value = prefs.getLong("dot_color", 0xFF4FD8EB)
     }
 
@@ -211,7 +214,7 @@ class VektorService : Service(), LifecycleRegistryOwner, SavedStateRegistryOwner
                     offsetY = offsetY.value,
                     dotSize = dotSizePx.value,
                     dotOpacity = dotOpacity.value,
-                    dotSpacing = dotSpacingDp.value,
+                    dotCount = dotCount.value,
                     colorHex = dotColorValue.value
                 )
             }
@@ -252,21 +255,38 @@ fun MotionOverlayCanvas(
     offsetY: Float,
     dotSize: Float,
     dotOpacity: Float,
-    dotSpacing: Int,
+    dotCount: Int,
     colorHex: Long
 ) {
     val baseColor = Color(colorHex)
     val finalColor = baseColor.copy(alpha = dotOpacity)
 
+    // Smooth out the motion using a spring animation
+    val animatedX by animateFloatAsState(
+        targetValue = offsetX,
+        animationSpec = spring(stiffness = 300f, dampingRatio = 0.8f),
+        label = "offsetX"
+    )
+    val animatedY by animateFloatAsState(
+        targetValue = offsetY,
+        animationSpec = spring(stiffness = 300f, dampingRatio = 0.8f),
+        label = "offsetY"
+    )
+
     Canvas(modifier = Modifier.fillMaxSize()) {
         val width = size.width
         val height = size.height
 
-        val spacingPx = dotSpacing * density
+        // Calculate spacing based on dotCount (using dotCount as "dots per dimension" roughly)
+        // We'll aim for approx dotCount total dots on screen. 
+        // totalDots = (width/spacing) * (height/spacing)
+        // spacing = sqrt(width * height / totalDots)
+        val totalArea = width * height
+        val spacingPx = kotlin.math.sqrt(totalArea / dotCount.coerceAtLeast(1))
         
         // Wrap offsets to stay within [0, spacingPx)
-        val gridOffsetX = offsetX % spacingPx
-        val gridOffsetY = offsetY % spacingPx
+        val gridOffsetX = animatedX % spacingPx
+        val gridOffsetY = animatedY % spacingPx
 
         val exclusionRadiusPx = 180 * density
         val exclusionRadiusSq = exclusionRadiusPx * exclusionRadiusPx
