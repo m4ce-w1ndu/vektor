@@ -37,3 +37,7 @@ Thumbs.db
 # Kotlin-specific
 .kotlin/
 .gradle-kotlin-dsl-state/
+
+# Gradle daemon JVM settings
+gradle-daemon-jvm.properties
+
