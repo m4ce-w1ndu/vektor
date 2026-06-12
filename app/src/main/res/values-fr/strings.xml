@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Vektor</string>
+    <string name="service_notification_channel_name">Service de mouvement Vektor</string>
+    <string name="service_notification_title">Vektor Actif</string>
+    <string name="service_notification_description">Vektor fonctionne pour contrer les effets du mal des transports.</string>
+</resources>
