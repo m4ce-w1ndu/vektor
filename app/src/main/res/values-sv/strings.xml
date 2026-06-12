@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Vektor</string>
+    <string name="service_notification_channel_name">Vektor rörelsetjänst</string>
+    <string name="service_notification_title">Vektor Aktiv</string>
+    <string name="service_notification_description">Vektor körs för att motverka åksjuka.</string>
+</resources>
