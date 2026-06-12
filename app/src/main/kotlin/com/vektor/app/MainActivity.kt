@@ -126,14 +126,14 @@ fun MainScreen(
                 .statusBarsPadding()
                 .navigationBarsPadding()
                 .verticalScroll(rememberScrollState())
-                .padding(24dp),
-            verticalArrangement = Arrangement.spacedBy(20dp)
+                .padding(24.dp),
+            verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
             // Header Section
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 12dp)
+                    .padding(vertical = 12.dp)
             ) {
                 Text(
                     text = "Vektor",
@@ -163,12 +163,12 @@ fun MainScreen(
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(containerColor = statusCardColor),
-                shape = RoundedCornerShape(24dp)
+                shape = RoundedCornerShape(24.dp)
             ) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(20dp),
+                        .padding(20.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -207,19 +207,19 @@ fun MainScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .border(
-                            width = 1.5dp,
+                            width = 1.5.dp,
                             color = MaterialTheme.colorScheme.error.copy(alpha = 0.5f),
-                            shape = RoundedCornerShape(24dp)
+                            shape = RoundedCornerShape(24.dp)
                         )
                         .clickable { onRequestPermission() },
                     colors = CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.2f)
                     ),
-                    shape = RoundedCornerShape(24dp)
+                    shape = RoundedCornerShape(24.dp)
                 ) {
                     Column(
-                        modifier = Modifier.padding(20dp),
-                        verticalArrangement = Arrangement.spacedBy(8dp)
+                        modifier = Modifier.padding(20.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Text(
                             text = "Permission Required",
@@ -242,23 +242,23 @@ fun MainScreen(
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
-                modifier = Modifier.padding(start = 4dp, top = 8dp)
+                modifier = Modifier.padding(start = 4.dp, top = 8.dp)
             )
 
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                shape = RoundedCornerShape(24dp),
+                shape = RoundedCornerShape(24.dp),
                 border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
             ) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(20dp),
-                    verticalArrangement = Arrangement.spacedBy(20dp)
+                        .padding(20.dp),
+                    verticalArrangement = Arrangement.spacedBy(20.dp)
                 ) {
                     // Dot Color Picker
-                    Column(verticalArrangement = Arrangement.spacedBy(8dp)) {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text(
                             text = "Dot Color",
                             fontSize = 14.sp,
@@ -266,14 +266,14 @@ fun MainScreen(
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Row(
-                            horizontalArrangement = Arrangement.spacedBy(12dp),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             colorsList.forEach { colorHex ->
                                 val isSelected = dotColorHex == colorHex
                                 Box(
                                     modifier = Modifier
-                                        .size(36dp)
+                                        .size(36.dp)
                                         .clip(CircleShape)
                                         .background(Color(colorHex))
                                         .border(
@@ -416,7 +416,7 @@ fun MainScreen(
                 color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.4f),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 12dp)
+                    .padding(vertical = 12.dp)
             )
         }
     }
