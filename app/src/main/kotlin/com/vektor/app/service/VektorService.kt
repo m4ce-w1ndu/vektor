@@ -18,7 +18,9 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
@@ -61,19 +63,19 @@ class VektorService : Service(), LifecycleRegistryOwner, SavedStateRegistryOwner
     private var gyroscope: Sensor? = null
 
     // Configuration values (can be customized via SharedPreferences)
-    private val dotSizePx = mutableStateOf(18f)
-    private val dotColorValue = mutableStateOf(0xFF4FD8EB)
-    private val dotOpacity = mutableStateOf(0.6f)
-    private val sensitivity = mutableStateOf(15f)
-    private val dotCount = mutableStateOf(20)
+    private val dotSizePx = mutableFloatStateOf(18f)
+    private val dotColorValue = mutableLongStateOf(0xFF4FD8EB)
+    private val dotOpacity = mutableFloatStateOf(0.6f)
+    private val sensitivity = mutableFloatStateOf(15f)
+    private val dotCount = mutableIntStateOf(20)
 
     private val prefsListener = android.content.SharedPreferences.OnSharedPreferenceChangeListener { _, _ ->
         loadSettings()
     }
 
     // Physics state
-    private val offsetX = mutableStateOf(0f)
-    private val offsetY = mutableStateOf(0f)
+    private val offsetX = mutableFloatStateOf(0f)
+    private val offsetY = mutableFloatStateOf(0f)
 
     // Low pass filter constants
     private val filterFactor = 0.15f // lower = smoother but slower, higher = faster
@@ -90,19 +92,19 @@ class VektorService : Service(), LifecycleRegistryOwner, SavedStateRegistryOwner
                     val rawX = event.values[0]
                     val rawY = event.values[1]
 
-                    filteredAccX = filteredAccX + filterFactor * (rawX - filteredAccX)
-                    filteredAccY = filteredAccY + filterFactor * (rawY - filteredAccY)
+                    filteredAccX += filterFactor * (rawX - filteredAccX)
+                    filteredAccY += filterFactor * (rawY - filteredAccY)
 
                     // Update UI offset based on acceleration force
                     // Oppose vehicle movement: if accelerated right (positive rawX), dots drift left (negative offsetX)
-                    offsetX.value = -filteredAccX * sensitivity.value
-                    offsetY.value = filteredAccY * sensitivity.value // Car forward (positive rawY) -> dots move down (positive offsetY)
+                    offsetX.floatValue = -filteredAccX * sensitivity.floatValue
+                    offsetY.floatValue = filteredAccY * sensitivity.floatValue // Car forward (positive rawY) -> dots move down (positive offsetY)
                 }
                 Sensor.TYPE_GYROSCOPE -> {
                     // Gyroscope can be integrated here for rotational drift compensation
                     val rotZ = event.values[2] // rotation around Z axis
                     // Modify offsetX based on rotational velocity for centripetal correction
-                    offsetX.value += rotZ * sensitivity.value * 0.5f
+                    offsetX.floatValue += rotZ * sensitivity.floatValue * 0.5f
                 }
             }
         }
@@ -162,11 +164,11 @@ class VektorService : Service(), LifecycleRegistryOwner, SavedStateRegistryOwner
 
     private fun loadSettings() {
         val prefs = getSharedPreferences("vektor_settings", MODE_PRIVATE)
-        dotSizePx.value = prefs.getFloat("dot_size", 16f)
-        dotOpacity.value = prefs.getFloat("dot_opacity", 0.5f)
-        sensitivity.value = prefs.getFloat("sensitivity", 20f)
-        dotCount.value = prefs.getInt("dot_count", 20)
-        dotColorValue.value = prefs.getLong("dot_color", 0xFF4FD8EB)
+        dotSizePx.floatValue = prefs.getFloat("dot_size", 16f)
+        dotOpacity.floatValue = prefs.getFloat("dot_opacity", 0.5f)
+        sensitivity.floatValue = prefs.getFloat("sensitivity", 20f)
+        dotCount.intValue = prefs.getInt("dot_count", 20)
+        dotColorValue.longValue = prefs.getLong("dot_color", 0xFF4FD8EB)
     }
 
     private fun setupSensors() {
@@ -202,12 +204,12 @@ class VektorService : Service(), LifecycleRegistryOwner, SavedStateRegistryOwner
             
             setContent {
                 MotionOverlayCanvas(
-                    offsetX = offsetX.value,
-                    offsetY = offsetY.value,
-                    dotSize = dotSizePx.value,
-                    dotOpacity = dotOpacity.value,
-                    dotCount = dotCount.value,
-                    colorHex = dotColorValue.value
+                    offsetX = offsetX.floatValue,
+                    offsetY = offsetY.floatValue,
+                    dotSize = dotSizePx.floatValue,
+                    dotOpacity = dotOpacity.floatValue,
+                    dotCount = dotCount.intValue,
+                    colorHex = dotColorValue.longValue
                 )
             }
         }
