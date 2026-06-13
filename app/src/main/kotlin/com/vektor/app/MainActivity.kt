@@ -99,7 +99,7 @@ fun MainScreen(
     // Settings state backing sliders
     var dotSize by remember { mutableFloatStateOf(prefs.getFloat("dot_size", 16f)) }
     var dotOpacity by remember { mutableFloatStateOf(prefs.getFloat("dot_opacity", 0.5f)) }
-    var sensitivity by remember { mutableFloatStateOf(prefs.getFloat("sensitivity", 20f)) }
+    var sensitivity by remember { mutableFloatStateOf(prefs.getFloat("sensitivity", 35f)) }
     var dotCount by remember { mutableIntStateOf(prefs.getInt("dot_count", 20)) }
     var dotColorHex by remember { mutableLongStateOf(prefs.getLong("dot_color", 0xFF4FD8EB)) }
 

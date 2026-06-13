@@ -59,14 +59,14 @@ class VektorService : Service(), LifecycleRegistryOwner, SavedStateRegistryOwner
     private var overlayView: ComposeView? = null
     private var sensorManager: SensorManager? = null
 
-    private var accelerometer: Sensor? = null
+    private var linearAccel: Sensor? = null
     private var gyroscope: Sensor? = null
 
     // Configuration values (can be customized via SharedPreferences)
     private val dotSizePx = mutableFloatStateOf(18f)
     private val dotColorValue = mutableLongStateOf(0xFF4FD8EB)
     private val dotOpacity = mutableFloatStateOf(0.6f)
-    private val sensitivity = mutableFloatStateOf(15f)
+    private val sensitivity = mutableFloatStateOf(35f)
     private val dotCount = mutableIntStateOf(20)
 
     private val prefsListener = android.content.SharedPreferences.OnSharedPreferenceChangeListener { _, _ ->
@@ -78,27 +78,31 @@ class VektorService : Service(), LifecycleRegistryOwner, SavedStateRegistryOwner
     private val offsetY = mutableFloatStateOf(0f)
 
     // Low pass filter constants
-    private val filterFactor = 0.15f // lower = smoother but slower, higher = faster
+    private val filterFactor = 0.12f // Slightly faster response for linear acceleration
     private var filteredAccX = 0f
     private var filteredAccY = 0f
 
     private val sensorListener = object : SensorEventListener {
         override fun onSensorChanged(event: SensorEvent) {
             when (event.sensor.type) {
-                Sensor.TYPE_ACCELEROMETER -> {
-                    // event.values[0] is X (left-right force)
-                    // event.values[1] is Y (up-down force)
-                    // Apply low-pass filter to smooth out minor vibrations (road noise)
+                Sensor.TYPE_LINEAR_ACCELERATION -> {
+                    // Linear acceleration excludes gravity, so it only reacts to actual movement.
+                    // This prevents the dots from sliding away when the phone is tilted.
+                    
                     val rawX = event.values[0]
                     val rawY = event.values[1]
 
                     filteredAccX += filterFactor * (rawX - filteredAccX)
                     filteredAccY += filterFactor * (rawY - filteredAccY)
 
-                    // Update UI offset based on acceleration force
-                    // Oppose vehicle movement: if accelerated right (positive rawX), dots drift left (negative offsetX)
-                    offsetX.floatValue = -filteredAccX * sensitivity.floatValue
-                    offsetY.floatValue = filteredAccY * sensitivity.floatValue // Car forward (positive rawY) -> dots move down (positive offsetY)
+                    // iOS Tuning:
+                    // 1. Move dots opposite to inertia (visual flow matching the world).
+                    // 2. We use a wrapping grid, so we just continuously increment the offset.
+                    // Note: Since we are using wrapping, we can just add the velocity to the offset.
+                    // This makes them "flow" at a speed proportional to acceleration.
+                    
+                    offsetX.floatValue -= filteredAccX * sensitivity.floatValue * 0.1f
+                    offsetY.floatValue += filteredAccY * sensitivity.floatValue * 0.1f
                 }
                 Sensor.TYPE_GYROSCOPE -> {
                     // Gyroscope can be integrated here for rotational drift compensation
@@ -173,11 +177,11 @@ class VektorService : Service(), LifecycleRegistryOwner, SavedStateRegistryOwner
 
     private fun setupSensors() {
         sensorManager = getSystemService(SENSOR_SERVICE) as SensorManager
-        accelerometer = sensorManager?.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
+        linearAccel = sensorManager?.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION)
         gyroscope = sensorManager?.getDefaultSensor(Sensor.TYPE_GYROSCOPE)
 
         // Register with SENSOR_DELAY_UI (approx 60Hz) to save battery while remaining responsive
-        sensorManager?.registerListener(sensorListener, accelerometer, SensorManager.SENSOR_DELAY_UI)
+        sensorManager?.registerListener(sensorListener, linearAccel, SensorManager.SENSOR_DELAY_UI)
         sensorManager?.registerListener(sensorListener, gyroscope, SensorManager.SENSOR_DELAY_UI)
     }
 
