@@ -81,6 +81,7 @@ class VektorService : Service(), LifecycleRegistryOwner, SavedStateRegistryOwner
     private val filterFactor = 0.12f // Slightly faster response for linear acceleration
     private var filteredAccX = 0f
     private var filteredAccY = 0f
+    private var filteredAccZ = 0f
 
     private val sensorListener = object : SensorEventListener {
         override fun onSensorChanged(event: SensorEvent) {
@@ -91,18 +92,23 @@ class VektorService : Service(), LifecycleRegistryOwner, SavedStateRegistryOwner
                     
                     val rawX = event.values[0]
                     val rawY = event.values[1]
+                    val rawZ = event.values[2]
 
                     filteredAccX += filterFactor * (rawX - filteredAccX)
                     filteredAccY += filterFactor * (rawY - filteredAccY)
+                    filteredAccZ += filterFactor * (rawZ - filteredAccZ)
 
                     // iOS Tuning:
                     // 1. Move dots opposite to inertia (visual flow matching the world).
                     // 2. We use a wrapping grid, so we just continuously increment the offset.
-                    // Note: Since we are using wrapping, we can just add the velocity to the offset.
-                    // This makes them "flow" at a speed proportional to acceleration.
+                    // 3. We fuse Y and Z axes to handle different phone orientations (upright in mount vs flat).
                     
                     offsetX.floatValue -= filteredAccX * sensitivity.floatValue * 0.1f
-                    offsetY.floatValue += filteredAccY * sensitivity.floatValue * 0.1f
+                    
+                    // Accelerating forward: user feels pushed back, dots move UP (negative screen Y).
+                    // Braking: user feels pushed forward, dots move DOWN (positive screen Y).
+                    val longitudinalForce = filteredAccY - filteredAccZ
+                    offsetY.floatValue -= longitudinalForce * sensitivity.floatValue * 0.1f
                 }
                 Sensor.TYPE_GYROSCOPE -> {
                     // Gyroscope can be integrated here for rotational drift compensation
