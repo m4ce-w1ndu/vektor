@@ -386,7 +386,7 @@ fun MainScreen(
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                             Text(
-                                text = "${dotCount} dots",
+                                text = "$dotCount dots",
                                 fontSize = 13.sp,
                                 color = MaterialTheme.colorScheme.primary,
                                 fontWeight = FontWeight.SemiBold
