@@ -81,29 +81,32 @@ class VektorService : Service(), LifecycleRegistryOwner, SavedStateRegistryOwner
     private var gravityX = 0f
     private var gravityY = 0f
     private var gravityZ = 0f
-    private val alpha = 0.8f // Filter constant for gravity extraction
+    private val alpha = 0.98f // Increased for much better gravity stability
 
     private val sensorListener = object : SensorEventListener {
         override fun onSensorChanged(event: SensorEvent) {
             when (event.sensor.type) {
                 Sensor.TYPE_ACCELEROMETER -> {
-                    // Extract gravity with a low-pass filter
+                    // Extract gravity with a high-quality low-pass filter
                     gravityX = alpha * gravityX + (1 - alpha) * event.values[0]
                     gravityY = alpha * gravityY + (1 - alpha) * event.values[1]
                     gravityZ = alpha * gravityZ + (1 - alpha) * event.values[2]
 
-                    // Remove gravity to get linear acceleration
+                    // Remove gravity to get pure linear acceleration
                     val linearX = event.values[0] - gravityX
                     val linearY = event.values[1] - gravityY
                     val linearZ = event.values[2] - gravityZ
 
-                    // Use the original working logic but with gravity removed
-                    offsetX.floatValue -= linearX * sensitivity.floatValue * 0.1f
+                    // Use assignment instead of accumulation to stop infinite drift.
+                    // This mirrors the "original working version" but with gravity removed.
+                    offsetX.floatValue = -linearX * sensitivity.floatValue
                     
-                    // Fusing Y and Z for longitudinal motion
-                    // If flat, Y is forward. If vertical, Z is forward.
-                    val longitudinalForce = linearY - linearZ
-                    offsetY.floatValue -= longitudinalForce * sensitivity.floatValue * 0.12f
+                    // Unified Longitudinal Logic: 
+                    // Accelerating Forward -> Inertia is Backward. 
+                    // Backward inertia is felt as +Z (upright) or -Y (flat).
+                    // We want dots to move UP (negative offsetY) in this case.
+                    val longitudinalInertia = linearZ - linearY
+                    offsetY.floatValue = -longitudinalInertia * sensitivity.floatValue
                 }
                 Sensor.TYPE_GYROSCOPE -> {
                     // Gyroscope can be integrated here for rotational drift compensation
