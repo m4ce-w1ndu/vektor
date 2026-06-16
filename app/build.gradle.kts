@@ -5,12 +5,12 @@ plugins {
 
 android {
     namespace = "com.m4cew1ndu.vektor"
-    compileSdk = 34
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "com.m4cew1ndu.vektor"
         minSdk = 26
-        targetSdk = 34
+        targetSdk = 37
         versionCode = (project.findProperty("versionCode") as? String)?.toInt() ?: 1
         versionName = project.findProperty("versionName") as? String ?: "0.2.0"
 
