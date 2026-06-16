@@ -105,11 +105,12 @@ class VektorService : Service(), LifecycleRegistryOwner, SavedStateRegistryOwner
 
                     // iOS Physics: Acceleration translates to velocity (flow speed)
                     // Sideways inertia (-linearX)
-                    accelX.floatValue = -linearX * sensitivity.floatValue * 10f
+                    accelX.floatValue = -linearX * sensitivity.floatValue * 12f
                     
                     // Longitudinal inertia (Z-Y)
+                    // We significantly increase the gain to ensure forward/backward motion is clearly registered
                     val longitudinalInertia = linearZ - linearY
-                    accelY.floatValue = -longitudinalInertia * sensitivity.floatValue * 10f
+                    accelY.floatValue = -longitudinalInertia * sensitivity.floatValue * 35f
                 }
                 Sensor.TYPE_GYROSCOPE -> {
                     // Gyroscope can be integrated here for rotational drift compensation
@@ -230,8 +231,9 @@ class VektorService : Service(), LifecycleRegistryOwner, SavedStateRegistryOwner
                                 val dt = (time - lastTime) / 1e9f
                                 
                                 // Momentum-based flow: Acceleration adds to velocity, velocity decays
-                                velocityX.floatValue = (velocityX.floatValue + accelX.floatValue * dt) * 0.96f
-                                velocityY.floatValue = (velocityY.floatValue + accelY.floatValue * dt) * 0.96f
+                                velocityX.floatValue = (velocityX.floatValue + accelX.floatValue * dt) * 0.95f
+                                // Add a tiny bit of background motion (0.5f) to mimic iOS "always alive" feel
+                                velocityY.floatValue = (velocityY.floatValue + accelY.floatValue * dt) * 0.95f + 0.5f
 
                                 // Continuously scroll the dots based on current velocity
                                 offsetX.floatValue += velocityX.floatValue * dt
@@ -304,17 +306,25 @@ fun MotionOverlayCanvas(
         val sidePaddingPx = 25 * density
         
         // Wrap offsets to create the continuous flow effect
-        val gridOffsetX = offsetX % verticalSpacingPx // Reuse spacing for wrapping
-        val gridOffsetY = offsetY % verticalSpacingPx
+        // We use rem to keep it in a small range to avoid float precision issues over long runs
+        val gridOffsetX = (offsetX % columnSpacingPx + columnSpacingPx) % columnSpacingPx
+        val gridOffsetY = (offsetY % verticalSpacingPx + verticalSpacingPx) % verticalSpacingPx
 
-        for (col in 0 until columnCount) {
+        // Sidebar Width calculation to prevent dots from wandering into the center
+        val maxSideWidth = sidePaddingPx + (columnCount * columnSpacingPx)
+
+        for (col in -1..columnCount) {
             // Left side columns
             val leftX = sidePaddingPx + (col * columnSpacingPx) + gridOffsetX
-            renderColumn(leftX, gridOffsetY, verticalSpacingPx, height, finalColor, dotSize)
+            if (leftX < maxSideWidth) {
+                renderColumn(leftX, gridOffsetY, verticalSpacingPx, height, finalColor, dotSize)
+            }
             
-            // Right side columns
-            val rightX = width - sidePaddingPx - (col * columnSpacingPx) + gridOffsetX
-            renderColumn(rightX, gridOffsetY, verticalSpacingPx, height, finalColor, dotSize)
+            // Right side columns (mirrored from the right edge)
+            val rightX = width - (sidePaddingPx + (col * columnSpacingPx) + gridOffsetX)
+            if (rightX > width - maxSideWidth) {
+                renderColumn(rightX, gridOffsetY, verticalSpacingPx, height, finalColor, dotSize)
+            }
         }
     }
 }
