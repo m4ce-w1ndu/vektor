@@ -21,6 +21,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
@@ -67,13 +72,17 @@ class VektorService : Service(), LifecycleRegistryOwner, SavedStateRegistryOwner
     private val dotColorValue = mutableLongStateOf(0xFF4FD8EB)
     private val dotOpacity = mutableFloatStateOf(0.6f)
     private val sensitivity = mutableFloatStateOf(35f)
-    private val dotCount = mutableIntStateOf(20)
+    private val columnCount = mutableIntStateOf(2)
 
     private val prefsListener = android.content.SharedPreferences.OnSharedPreferenceChangeListener { _, _ ->
         loadSettings()
     }
 
     // Physics state
+    private val accelX = mutableFloatStateOf(0f)
+    private val accelY = mutableFloatStateOf(0f)
+    private val velocityX = mutableFloatStateOf(0f)
+    private val velocityY = mutableFloatStateOf(0f)
     private val offsetX = mutableFloatStateOf(0f)
     private val offsetY = mutableFloatStateOf(0f)
 
@@ -97,16 +106,13 @@ class VektorService : Service(), LifecycleRegistryOwner, SavedStateRegistryOwner
                     val linearY = event.values[1] - gravityY
                     val linearZ = event.values[2] - gravityZ
 
-                    // Use assignment instead of accumulation to stop infinite drift.
-                    // This mirrors the "original working version" but with gravity removed.
-                    offsetX.floatValue = -linearX * sensitivity.floatValue
+                    // iOS Physics: Acceleration translates to velocity (flow speed)
+                    // Sideways inertia (-linearX)
+                    accelX.floatValue = -linearX * sensitivity.floatValue * 10f
                     
-                    // Unified Longitudinal Logic: 
-                    // Accelerating Forward -> Inertia is Backward. 
-                    // Backward inertia is felt as +Z (upright) or -Y (flat).
-                    // We want dots to move UP (negative offsetY) in this case.
+                    // Longitudinal inertia (Z-Y)
                     val longitudinalInertia = linearZ - linearY
-                    offsetY.floatValue = -longitudinalInertia * sensitivity.floatValue
+                    accelY.floatValue = -longitudinalInertia * sensitivity.floatValue * 10f
                 }
                 Sensor.TYPE_GYROSCOPE -> {
                     // Gyroscope can be integrated here for rotational drift compensation
@@ -174,8 +180,8 @@ class VektorService : Service(), LifecycleRegistryOwner, SavedStateRegistryOwner
         val prefs = getSharedPreferences("vektor_settings", MODE_PRIVATE)
         dotSizePx.floatValue = prefs.getFloat("dot_size", 16f)
         dotOpacity.floatValue = prefs.getFloat("dot_opacity", 0.5f)
-        sensitivity.floatValue = prefs.getFloat("sensitivity", 20f)
-        dotCount.intValue = prefs.getInt("dot_count", 20)
+        sensitivity.floatValue = prefs.getFloat("sensitivity", 35f)
+        columnCount.intValue = prefs.getInt("column_count", 2)
         dotColorValue.longValue = prefs.getLong("dot_color", 0xFF4FD8EB)
     }
 
@@ -218,12 +224,33 @@ class VektorService : Service(), LifecycleRegistryOwner, SavedStateRegistryOwner
             setViewTreeSavedStateRegistryOwner(this@VektorService)
             
             setContent {
+                var lastTime by remember { mutableLongStateOf(0L) }
+                
+                LaunchedEffect(Unit) {
+                    while (true) {
+                        withFrameNanos { time ->
+                            if (lastTime != 0L) {
+                                val dt = (time - lastTime) / 1e9f
+                                
+                                // Momentum-based flow: Acceleration adds to velocity, velocity decays
+                                velocityX.floatValue = (velocityX.floatValue + accelX.floatValue * dt) * 0.96f
+                                velocityY.floatValue = (velocityY.floatValue + accelY.floatValue * dt) * 0.96f
+
+                                // Continuously scroll the dots based on current velocity
+                                offsetX.floatValue += velocityX.floatValue * dt
+                                offsetY.floatValue += velocityY.floatValue * dt
+                            }
+                            lastTime = time
+                        }
+                    }
+                }
+
                 MotionOverlayCanvas(
                     offsetX = offsetX.floatValue,
                     offsetY = offsetY.floatValue,
                     dotSize = dotSizePx.floatValue,
                     dotOpacity = dotOpacity.floatValue,
-                    dotCount = dotCount.intValue,
+                    columnCount = columnCount.intValue,
                     colorHex = dotColorValue.longValue
                 )
             }
@@ -264,63 +291,53 @@ fun MotionOverlayCanvas(
     offsetY: Float,
     dotSize: Float,
     dotOpacity: Float,
-    dotCount: Int,
+    columnCount: Int,
     colorHex: Long
 ) {
     val baseColor = Color(colorHex)
     val finalColor = baseColor.copy(alpha = dotOpacity)
 
-    // Smooth out the motion using a spring animation
-    val animatedX by animateFloatAsState(
-        targetValue = offsetX,
-        animationSpec = spring(stiffness = 300f, dampingRatio = 0.8f),
-        label = "offsetX"
-    )
-    val animatedY by animateFloatAsState(
-        targetValue = offsetY,
-        animationSpec = spring(stiffness = 300f, dampingRatio = 0.8f),
-        label = "offsetY"
-    )
-
     Canvas(modifier = Modifier.fillMaxSize()) {
         val width = size.width
         val height = size.height
 
-        // Calculate spacing based on dotCount (using dotCount as "dots per dimension" roughly)
-        // We'll aim for approx dotCount total dots on screen. 
-        // totalDots = (width/spacing) * (height/spacing)
-        // spacing = sqrt(width * height / totalDots)
-        val totalArea = width * height
-        val spacingPx = kotlin.math.sqrt(totalArea / dotCount.coerceAtLeast(1))
+        // iOS Styling: Columns on the sides
+        val verticalSpacingPx = 60 * density
+        val columnSpacingPx = 30 * density
+        val sidePaddingPx = 25 * density
         
-        // Wrap offsets to stay within [0, spacingPx)
-        val gridOffsetX = animatedX % spacingPx
-        val gridOffsetY = animatedY % spacingPx
+        // Wrap offsets to create the continuous flow effect
+        val gridOffsetX = offsetX % verticalSpacingPx // Reuse spacing for wrapping
+        val gridOffsetY = offsetY % verticalSpacingPx
 
-        // iOS-like: Limit dots to the sides of the screen
-        val sideMarginPx = 80 * density
-
-        var x = -spacingPx
-        while (x < width + spacingPx) {
-            var y = -spacingPx
-            while (y < height + spacingPx) {
-                val drawX = x + gridOffsetX
-                val drawY = y + gridOffsetY
-                
-                // Only render dots on the left or right sides
-                val isOnLeft = drawX < sideMarginPx
-                val isOnRight = drawX > (width - sideMarginPx)
-                
-                if (isOnLeft || isOnRight) {
-                    drawCircle(
-                        color = finalColor,
-                        radius = dotSize / 2,
-                        center = Offset(drawX, drawY)
-                    )
-                }
-                y += spacingPx
-            }
-            x += spacingPx
+        for (col in 0 until columnCount) {
+            // Left side columns
+            val leftX = sidePaddingPx + (col * columnSpacingPx) + gridOffsetX
+            renderColumn(leftX, gridOffsetY, verticalSpacingPx, height, finalColor, dotSize)
+            
+            // Right side columns
+            val rightX = width - sidePaddingPx - (col * columnSpacingPx) + gridOffsetX
+            renderColumn(rightX, gridOffsetY, verticalSpacingPx, height, finalColor, dotSize)
         }
+    }
+}
+
+private fun androidx.compose.ui.graphics.drawscope.DrawScope.renderColumn(
+    baseX: Float,
+    gridOffsetY: Float,
+    spacingPx: Float,
+    height: Float,
+    color: Color,
+    dotSize: Float
+) {
+    var y = -spacingPx
+    while (y < height + spacingPx) {
+        val drawY = y + gridOffsetY
+        drawCircle(
+            color = color,
+            radius = dotSize / 2,
+            center = Offset(baseX, drawY)
+        )
+        y += spacingPx
     }
 }

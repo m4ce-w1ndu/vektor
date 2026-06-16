@@ -18,8 +18,8 @@
     <string name="dot_size">Dimensione Punti</string>
     <string name="opacity">Opacità</string>
     <string name="motion_sensitivity">Sensibilità Movimento</string>
-    <string name="dot_count">Numero Punti</string>
-    <string name="dots_unit">punti</string>
+    <string name="column_count">Numero Colonne</string>
+    <string name="columns_unit">col</string>
 
     <string name="footer_info">Vektor allinea i segnali di movimento visivi con il movimento fisico, riducendo il conflitto sensoriale. Creato per tutti, completamente FOSS.</string>
 </resources>

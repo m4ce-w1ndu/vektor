@@ -18,8 +18,8 @@
     <string name="dot_size">Prickstorlek</string>
     <string name="opacity">Opacitet</string>
     <string name="motion_sensitivity">R\u00f6relsek\u00e4nslighet</string>
-    <string name="dot_count">Antal Prickar</string>
-    <string name="dots_unit">prickar</string>
+    <string name="column_count">Antal Kolumner</string>
+    <string name="columns_unit">kol</string>
 
     <string name="footer_info">Vektor synkroniserar visuella r\u00f6relser med fysisk r\u00f6relse f\u00f6r att minska sensorisk konflikt. Skapad f\u00f6r alla, helt FOSS.</string>
 </resources>

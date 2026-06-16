@@ -18,8 +18,8 @@
     <string name="dot_size">Punktgr\u00f6\u00dfe</string>
     <string name="opacity">Deckkraft</string>
     <string name="motion_sensitivity">Bewegungsempfindlichkeit</string>
-    <string name="dot_count">Punktanzahl</string>
-    <string name="dots_unit">Punkte</string>
+    <string name="column_count">Spaltenanzahl</string>
+    <string name="columns_unit">Sp.</string>
 
     <string name="footer_info">Vektor gleicht visuelle Bewegungshinweise mit physischer Bewegung ab, um sensorische Konflikte zu reduzieren. F\u00fcr alle gemacht, komplett FOSS.</string>
 </resources>

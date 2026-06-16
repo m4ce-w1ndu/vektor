@@ -18,8 +18,8 @@
     <string name="dot_size">Dot Size</string>
     <string name="opacity">Opacity</string>
     <string name="motion_sensitivity">Motion Sensitivity</string>
-    <string name="dot_count">Dot Count</string>
-    <string name="dots_unit">dots</string>
+    <string name="column_count">Column Count</string>
+    <string name="columns_unit">cols</string>
 
     <string name="footer_info">Vektor aligns visual motion clues with physical movement, reducing the sensory conflict that triggers vehicle motion sickness. Made for everyone, completely FOSS.</string>
 </resources>
