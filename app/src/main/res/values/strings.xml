@@ -4,4 +4,22 @@
     <string name="service_notification_channel_name">Vektor Motion Service</string>
     <string name="service_notification_title">Vektor Active</string>
     <string name="service_notification_description">Vektor is running to counter motion sickness cues.</string>
+
+    <string name="cues_active">Cues Active</string>
+    <string name="cues_paused">Cues Paused</string>
+    <string name="cues_active_desc">Drifting dots are aligning with movement.</string>
+    <string name="cues_paused_desc">Service is idle. Turn on to start cues.</string>
+
+    <string name="permission_required">Permission Required</string>
+    <string name="permission_description">Vektor needs the \"Display over other apps\" permission to show dots while you use other apps. Tap here to grant this permission in settings.</string>
+
+    <string name="preferences">Preferences</string>
+    <string name="dot_color">Dot Color</string>
+    <string name="dot_size">Dot Size</string>
+    <string name="opacity">Opacity</string>
+    <string name="motion_sensitivity">Motion Sensitivity</string>
+    <string name="dot_count">Dot Count</string>
+    <string name="dots_unit">dots</string>
+
+    <string name="footer_info">Vektor aligns visual motion clues with physical movement, reducing the sensory conflict that triggers vehicle motion sickness. Made for everyone, completely FOSS.</string>
 </resources>

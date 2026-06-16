@@ -1,7 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Vektor</string>
-    <string name="service_notification_channel_name">Vektor rörelsetjänst</string>
+    <string name="service_notification_channel_name">Vektor r\u00f6relsetj\u00e4nst</string>
     <string name="service_notification_title">Vektor Aktiv</string>
-    <string name="service_notification_description">Vektor körs för att motverka åksjuka.</string>
+    <string name="service_notification_description">Vektor k\u00f6rs f\u00f6r att motverka \u00e5ksjuka.</string>
+
+    <string name="cues_active">Signaler Aktiva</string>
+    <string name="cues_paused">Signaler Pausade</string>
+    <string name="cues_active_desc">Prickar anpassas efter r\u00f6relse.</string>
+    <string name="cues_paused_desc">Tj\u00e4nsten \u00e4r inaktiv. Aktivera f\u00f6r att starta.</string>
+
+    <string name="permission_required">Beh\u00f6righet Kr\u00e4vs</string>
+    <string name="permission_description">Vektor beh\u00f6ver tillst\u00e5ndet \"Visa \u00f6ver andra appar\". Tryck h\u00e4r f\u00f6r att bevilja.</string>
+
+    <string name="preferences">Inst\u00e4llningar</string>
+    <string name="dot_color">Prickf\u00e4rg</string>
+    <string name="dot_size">Prickstorlek</string>
+    <string name="opacity">Opacitet</string>
+    <string name="motion_sensitivity">R\u00f6relsek\u00e4nslighet</string>
+    <string name="dot_count">Antal Prickar</string>
+    <string name="dots_unit">prickar</string>
+
+    <string name="footer_info">Vektor synkroniserar visuella r\u00f6relser med fysisk r\u00f6relse f\u00f6r att minska sensorisk konflikt. Skapad f\u00f6r alla, helt FOSS.</string>
 </resources>

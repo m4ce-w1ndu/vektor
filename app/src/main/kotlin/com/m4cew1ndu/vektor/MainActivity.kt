@@ -26,6 +26,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -167,9 +168,9 @@ fun MainScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Column(modifier = Modifier.weight(1f)) {
+                            Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = if (isServiceRunning) "Cues Active" else "Cues Paused",
+                            text = if (isServiceRunning) stringResource(R.string.cues_active) else stringResource(R.string.cues_paused),
                             fontSize = 20.sp,
                             fontWeight = FontWeight.Bold,
                             color = if (isServiceRunning) {
@@ -179,7 +180,7 @@ fun MainScreen(
                             }
                         )
                         Text(
-                            text = if (isServiceRunning) "Drifting dots are aligning with movement." else "Service is idle. Turn on to start cues.",
+                            text = if (isServiceRunning) stringResource(R.string.cues_active_desc) else stringResource(R.string.cues_paused_desc),
                             fontSize = 13.sp,
                             color = if (isServiceRunning) {
                                 MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
@@ -217,13 +218,13 @@ fun MainScreen(
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Text(
-                            text = "Permission Required",
+                            text = stringResource(R.string.permission_required),
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.error
                         )
                         Text(
-                            text = "Vektor needs the \"Display over other apps\" permission to show dots while you use other apps. Tap here to grant this permission in settings.",
+                            text = stringResource(R.string.permission_description),
                             fontSize = 13.sp,
                             color = MaterialTheme.colorScheme.onErrorContainer
                         )
@@ -233,7 +234,7 @@ fun MainScreen(
 
             // Customization Options Section (only interactable if permission is granted)
             Text(
-                text = "Preferences",
+                text = stringResource(R.string.preferences),
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
@@ -255,7 +256,7 @@ fun MainScreen(
                     // Dot Color Picker
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text(
-                            text = "Dot Color",
+                            text = stringResource(R.string.dot_color),
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface
@@ -292,7 +293,7 @@ fun MainScreen(
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Text(
-                                text = "Dot Size",
+                                text = stringResource(R.string.dot_size),
                                 fontSize = 14.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onSurface
@@ -321,7 +322,7 @@ fun MainScreen(
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Text(
-                                text = "Opacity",
+                                text = stringResource(R.string.opacity),
                                 fontSize = 14.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onSurface
@@ -350,7 +351,7 @@ fun MainScreen(
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Text(
-                                text = "Motion Sensitivity",
+                                text = stringResource(R.string.motion_sensitivity),
                                 fontSize = 14.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onSurface
@@ -379,13 +380,13 @@ fun MainScreen(
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Text(
-                                text = "Dot Count",
+                                text = stringResource(R.string.dot_count),
                                 fontSize = 14.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                             Text(
-                                text = "$dotCount dots",
+                                text = "$dotCount ${stringResource(R.string.dots_unit)}",
                                 fontSize = 13.sp,
                                 color = MaterialTheme.colorScheme.primary,
                                 fontWeight = FontWeight.SemiBold
@@ -405,7 +406,7 @@ fun MainScreen(
 
             // Footer Information
             Text(
-                text = "Vektor aligns visual motion clues with physical movement, reducing the sensory conflict that triggers vehicle motion sickness. Made for everyone, completely FOSS.",
+                text = stringResource(R.string.footer_info),
                 fontSize = 11.sp,
                 textAlign = TextAlign.Center,
                 color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.4f),

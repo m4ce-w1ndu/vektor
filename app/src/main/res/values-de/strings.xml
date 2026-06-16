@@ -3,5 +3,23 @@
     <string name="app_name">Vektor</string>
     <string name="service_notification_channel_name">Vektor Bewegungsdienst</string>
     <string name="service_notification_title">Vektor Aktiv</string>
-    <string name="service_notification_description">Vektor läuft, um Reisekrankheit entgegenzuwirken.</string>
+    <string name="service_notification_description">Vektor l\u00e4uft, um Reisekrankheit entgegenzuwirken.</string>
+
+    <string name="cues_active">Signale Aktiv</string>
+    <string name="cues_paused">Signale Pausiert</string>
+    <string name="cues_active_desc">Punkte richten sich nach der Bewegung aus.</string>
+    <string name="cues_paused_desc">Dienst inaktiv. Einschalten zum Starten.</string>
+
+    <string name="permission_required">Berechtigung Erforderlich</string>
+    <string name="permission_description">Vektor ben\u00f6tigt die Berechtigung \"\u00dcber anderen Apps anzeigen\". Hier tippen zum Erteilen.</string>
+
+    <string name="preferences">Einstellungen</string>
+    <string name="dot_color">Punktfarbe</string>
+    <string name="dot_size">Punktgr\u00f6\u00dfe</string>
+    <string name="opacity">Deckkraft</string>
+    <string name="motion_sensitivity">Bewegungsempfindlichkeit</string>
+    <string name="dot_count">Punktanzahl</string>
+    <string name="dots_unit">Punkte</string>
+
+    <string name="footer_info">Vektor gleicht visuelle Bewegungshinweise mit physischer Bewegung ab, um sensorische Konflikte zu reduzieren. F\u00fcr alle gemacht, komplett FOSS.</string>
 </resources>

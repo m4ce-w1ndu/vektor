@@ -4,4 +4,22 @@
     <string name="service_notification_channel_name">Service de mouvement Vektor</string>
     <string name="service_notification_title">Vektor Actif</string>
     <string name="service_notification_description">Vektor fonctionne pour contrer les effets du mal des transports.</string>
+
+    <string name="cues_active">Signaux Actifs</string>
+    <string name="cues_paused">Signaux en Pause</string>
+    <string name="cues_active_desc">Les points s\u0027alignent avec le mouvement.</string>
+    <string name="cues_paused_desc">Service inactif. Activez pour commencer.</string>
+
+    <string name="permission_required">Permission Requise</string>
+    <string name="permission_description">Vektor a besoin de la permission \"Afficher par-dessus d\u0027autres applications\" pour afficher les points. Appuyez ici pour l\u0027accorder.</string>
+
+    <string name="preferences">Pr\u00e9f\u00e9rences</string>
+    <string name="dot_color">Couleur des Points</string>
+    <string name="dot_size">Taille des Points</string>
+    <string name="opacity">Opacit\u00e9</string>
+    <string name="motion_sensitivity">Sensibilit\u00e9 au Mouvement</string>
+    <string name="dot_count">Nombre de Points</string>
+    <string name="dots_unit">points</string>
+
+    <string name="footer_info">Vektor aligne les indices de mouvement visuels avec le mouvement physique, r\u00e9duisant le conflit sensoriel. Con\u00e7u pour tous, enti\u00e8rement FOSS.</string>
 </resources>
