@@ -3,8 +3,6 @@ package com.m4cew1ndu.vektor
 import android.app.Application
 import android.app.NotificationChannel
 import android.app.NotificationManager
-import android.content.Context
-import android.os.Build
 
 class VektorApplication : Application() {
     
