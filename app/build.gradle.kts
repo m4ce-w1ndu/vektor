@@ -11,8 +11,8 @@ android {
         applicationId = "com.m4cew1ndu.vektor"
         minSdk = 26
         targetSdk = 37
-        versionCode = (project.findProperty("versionCode") as? String)?.toInt() ?: 3
-        versionName = project.findProperty("versionName") as? String ?: "0.4.9"
+        versionCode = (project.findProperty("versionCode") as? String)?.toInt() ?: 4
+        versionName = project.findProperty("versionName") as? String ?: "0.5.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -28,6 +28,9 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            ndk {
+                debugSymbolLevel = "SYMBOL_TABLE"
+            }
         }
     }
     compileOptions {
