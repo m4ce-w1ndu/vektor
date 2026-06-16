@@ -297,8 +297,8 @@ fun MotionOverlayCanvas(
         val gridOffsetX = animatedX % spacingPx
         val gridOffsetY = animatedY % spacingPx
 
-        val exclusionRadiusPx = 180 * density
-        val exclusionRadiusSq = exclusionRadiusPx * exclusionRadiusPx
+        // iOS-like: Limit dots to the sides of the screen
+        val sideMarginPx = 80 * density
 
         var x = -spacingPx
         while (x < width + spacingPx) {
@@ -307,12 +307,11 @@ fun MotionOverlayCanvas(
                 val drawX = x + gridOffsetX
                 val drawY = y + gridOffsetY
                 
-                // Only render dots outside the central screen area
-                val dx = drawX - (width / 2)
-                val dy = drawY - (height / 2)
-                val distFromCenterSq = dx * dx + dy * dy
+                // Only render dots on the left or right sides
+                val isOnLeft = drawX < sideMarginPx
+                val isOnRight = drawX > (width - sideMarginPx)
                 
-                if (distFromCenterSq > exclusionRadiusSq) {
+                if (isOnLeft || isOnRight) {
                     drawCircle(
                         color = finalColor,
                         radius = dotSize / 2,
