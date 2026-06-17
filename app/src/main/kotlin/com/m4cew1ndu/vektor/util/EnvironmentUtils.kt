@@ -1,6 +1,7 @@
 package com.m4cew1ndu.vektor.util
 
 import android.os.Build
+import android.os.Environment
 import java.io.File
 
 object EnvironmentUtils {
@@ -18,17 +19,18 @@ object EnvironmentUtils {
             Build.PRODUCT.contains("waydroid", ignoreCase = true) ||
             Build.DEVICE.contains("waydroid", ignoreCase = true) ||
             File("/dev/waydroid-wayland").exists()
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             false
         }
     }
 
     private fun isBlueStacks(): Boolean {
         return try {
-            File("/sdcard/windows/BstSharedFolder").exists() ||
+            val storagePath = Environment.getExternalStorageDirectory().path
+            File("$storagePath/windows/BstSharedFolder").exists() ||
             Build.MODEL.contains("BlueStacks", ignoreCase = true) ||
             Build.MANUFACTURER.contains("BlueStacks", ignoreCase = true)
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             false
         }
     }
