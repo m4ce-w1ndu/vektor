@@ -112,8 +112,11 @@ class VektorService : Service(), LifecycleRegistryOwner, SavedStateRegistryOwner
                     // Accelerating Forward -> Dots flow UP (-offsetY).
                     // In flat mode (Y is forward), Forward Accel = +Y, we need negative force.
                     // In upright mode (Z is inward), Forward Accel = -Z, we need negative force.
-                    // (linearZ - linearY) provides -A in both cases.
-                    accelY.floatValue = (linearZ - linearY) * sensitivity.floatValue * 55f
+                    // Unified Longitudinal Logic:
+                    // Car accelerating forward -> Visual world moves back -> Dots flow UP (-offsetY).
+                    // Formula (linearY - linearZ) produces negative values for forward accel
+                    // across both flat and upright orientations.
+                    accelY.floatValue = (linearY - linearZ) * sensitivity.floatValue * 55f
                 }
                 Sensor.TYPE_GYROSCOPE -> {
                     // Gyroscope can be integrated here for rotational drift compensation
@@ -311,54 +314,56 @@ fun MotionOverlayCanvas(
         val width = size.width
         val height = size.height
 
-        // iOS Styling: Columns on the sides
+        // iOS Styling: Fixed Side Tracks
         val verticalSpacingPx = 60 * density
         val columnSpacingPx = 30 * density
-        val sidePaddingPx = 30 * density
+        val sidePaddingPx = 20 * density
         
         // Wrap vertical offset for seamless infinite vertical scrolling
         val gridOffsetY = (offsetY % verticalSpacingPx + verticalSpacingPx) % verticalSpacingPx
 
-        // Horizontal Tuning: Exactly columnCount columns per side
-        val sideZoneWidth = columnCount * columnSpacingPx
-        // Use sideZoneWidth as the wrap width to ensure dots stay within their side tracks
-        val horizontalWrapWidth = sideZoneWidth
-        val gridOffsetX = (offsetX % horizontalWrapWidth + horizontalWrapWidth) % horizontalWrapWidth
+        // Horizontal Wrapping Tuning
+        // We define a fixed width for the side track zone (e.g., space for 3 cols + margins)
+        val wrapWidthPx = 100 * density
+        // Calculate shift within this fixed zone
+        val gridOffsetX = (offsetX % wrapWidthPx + wrapWidthPx) % wrapWidthPx
 
         // Draw Left Side
         clipRect(
             left = 0f,
             top = 0f,
-            right = sidePaddingPx + sideZoneWidth,
+            right = sidePaddingPx + wrapWidthPx,
             bottom = height
         ) {
             for (col in 0 until columnCount) {
+                // Base position for this column
                 val baseX = sidePaddingPx + (col * columnSpacingPx) + gridOffsetX
-                // Draw the main column with wrapping
-                val wrappedX = ((baseX - sidePaddingPx) % horizontalWrapWidth + horizontalWrapWidth) % horizontalWrapWidth + sidePaddingPx
+                // Wrap it strictly within the [sidePadding, sidePadding + wrapWidth] zone
+                val wrappedX = ((baseX - sidePaddingPx) % wrapWidthPx + wrapWidthPx) % wrapWidthPx + sidePaddingPx
+                
                 renderColumn(wrappedX, gridOffsetY, verticalSpacingPx, height, finalColor, dotSize)
-                // Draw the wrap-around buddy column
-                renderColumn(wrappedX - horizontalWrapWidth, gridOffsetY, verticalSpacingPx, height, finalColor, dotSize)
+                // Draw wrapping buddy column (exactly one wrapWidth apart)
+                renderColumn(wrappedX - wrapWidthPx, gridOffsetY, verticalSpacingPx, height, finalColor, dotSize)
             }
         }
 
         // Draw Right Side
         clipRect(
-            left = width - (sidePaddingPx + sideZoneWidth),
+            left = width - (sidePaddingPx + wrapWidthPx),
             top = 0f,
             right = width,
             bottom = height
         ) {
+            val rightTrackStart = width - sidePaddingPx - wrapWidthPx
             for (col in 0 until columnCount) {
-                // For the right side, we offset from the right edge inwards
+                // Mirrored base position
                 val baseX = (width - sidePaddingPx - (col * columnSpacingPx)) + gridOffsetX
-                val rightZoneStart = width - sidePaddingPx - sideZoneWidth
-                // Wrap baseX within a zone starting at rightZoneStart
-                val wrappedX = ((baseX - rightZoneStart) % horizontalWrapWidth + horizontalWrapWidth) % horizontalWrapWidth + rightZoneStart
+                val wrappedX = ((baseX - rightTrackStart) % wrapWidthPx + wrapWidthPx) % wrapWidthPx + rightTrackStart
+                
                 renderColumn(wrappedX, gridOffsetY, verticalSpacingPx, height, finalColor, dotSize)
-                // Draw the wrap-around buddy column
-                renderColumn(wrappedX - horizontalWrapWidth, gridOffsetY, verticalSpacingPx, height, finalColor, dotSize)
-                renderColumn(wrappedX + horizontalWrapWidth, gridOffsetY, verticalSpacingPx, height, finalColor, dotSize)
+                // Draw wrapping buddy column
+                renderColumn(wrappedX - wrapWidthPx, gridOffsetY, verticalSpacingPx, height, finalColor, dotSize)
+                renderColumn(wrappedX + wrapWidthPx, gridOffsetY, verticalSpacingPx, height, finalColor, dotSize)
             }
         }
     }
