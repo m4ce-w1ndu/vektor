@@ -26,6 +26,7 @@ import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.platform.ComposeView
 import androidx.core.app.NotificationCompat
 import androidx.lifecycle.Lifecycle
@@ -107,10 +108,12 @@ class VektorService : Service(), LifecycleRegistryOwner, SavedStateRegistryOwner
                     // Sideways inertia (-linearX)
                     accelX.floatValue = -linearX * sensitivity.floatValue * 5f
                     
-                    // Longitudinal inertia (Z-Y)
-                    // We significantly increase the gain to ensure forward/backward motion is clearly registered
-                    val longitudinalInertia = linearZ - linearY
-                    accelY.floatValue = -longitudinalInertia * sensitivity.floatValue * 50f
+                    // Unified Longitudinal Logic:
+                    // Accelerating Forward -> Dots flow UP (-offsetY).
+                    // In flat mode (Y is forward), Forward Accel = +Y, we need negative force.
+                    // In upright mode (Z is inward), Forward Accel = -Z, we need negative force.
+                    // (linearZ - linearY) provides -A in both cases.
+                    accelY.floatValue = (linearZ - linearY) * sensitivity.floatValue * 55f
                 }
                 Sensor.TYPE_GYROSCOPE -> {
                     // Gyroscope can be integrated here for rotational drift compensation
@@ -222,6 +225,7 @@ class VektorService : Service(), LifecycleRegistryOwner, SavedStateRegistryOwner
             setViewTreeSavedStateRegistryOwner(this@VektorService)
             
             setContent {
+                val density = androidx.compose.ui.platform.LocalDensity.current.density
                 var lastTime by remember { mutableLongStateOf(0L) }
                 
                 LaunchedEffect(Unit) {
@@ -231,13 +235,20 @@ class VektorService : Service(), LifecycleRegistryOwner, SavedStateRegistryOwner
                                 val dt = (time - lastTime) / 1e9f
                                 
                                 // Momentum-based flow: Acceleration adds to velocity, velocity decays
+                                // Increased background speed (30dp/s) for "always alive" feel
+                                val backgroundSpeed = 30f * density
+                                
                                 velocityX.floatValue = (velocityX.floatValue + accelX.floatValue * dt) * 0.95f
-                                // Add a tiny bit of background motion (0.5f) to mimic iOS "always alive" feel
-                                velocityY.floatValue = (velocityY.floatValue + accelY.floatValue * dt) * 0.95f + 0.5f
-
-                                // Continuously scroll the dots based on current velocity
+                                velocityY.floatValue = (velocityY.floatValue + accelY.floatValue * dt) * 0.95f
+                                
+                                // Apply continuous movement
                                 offsetX.floatValue += velocityX.floatValue * dt
-                                offsetY.floatValue += velocityY.floatValue * dt
+                                offsetY.floatValue += (velocityY.floatValue + backgroundSpeed) * dt
+
+                                // Gentle "return to home" force for horizontal tracks so they don't stay drifted
+                                if (accelX.floatValue == 0f) {
+                                    offsetX.floatValue *= 0.98f 
+                                }
                             }
                             lastTime = time
                         }
@@ -308,44 +319,48 @@ fun MotionOverlayCanvas(
         // Wrap vertical offset for seamless infinite vertical scrolling
         val gridOffsetY = (offsetY % verticalSpacingPx + verticalSpacingPx) % verticalSpacingPx
 
-        // The horizontal offset (turning) should shift the entire "field" of columns
-        // but we clip it to the sidebar areas.
-        val lateralShift = offsetX
-
-        // Total width of the dot zone on each side
+        // Horizontal Tuning: Exactly columnCount columns per side
         val sideZoneWidth = columnCount * columnSpacingPx
-
-        // Define the side areas (left and right)
-        val leftRect = androidx.compose.ui.geometry.Rect(0f, 0f, sidePaddingPx + sideZoneWidth, height)
-        val rightRect = androidx.compose.ui.geometry.Rect(width - (sidePaddingPx + sideZoneWidth), 0f, width, height)
+        // Use sideZoneWidth as the wrap width to ensure dots stay within their side tracks
+        val horizontalWrapWidth = sideZoneWidth
+        val gridOffsetX = (offsetX % horizontalWrapWidth + horizontalWrapWidth) % horizontalWrapWidth
 
         // Draw Left Side
-        drawContext.canvas.save()
-        drawContext.canvas.clipRect(leftRect.left, leftRect.top, leftRect.right, leftRect.bottom)
-        for (col in 0 until columnCount) {
-            val baseX = sidePaddingPx + (col * columnSpacingPx) + lateralShift
-            // Wrap baseX within the left side zone to keep dots looping horizontally if they drift too far
-            val wrappedX = ((baseX - sidePaddingPx) % sideZoneWidth + sideZoneWidth) % sideZoneWidth + sidePaddingPx
-            renderColumn(wrappedX, gridOffsetY, verticalSpacingPx, height, finalColor, dotSize)
-            // Draw a second column for seamless horizontal wrapping
-            renderColumn(wrappedX - sideZoneWidth, gridOffsetY, verticalSpacingPx, height, finalColor, dotSize)
-            renderColumn(wrappedX + sideZoneWidth, gridOffsetY, verticalSpacingPx, height, finalColor, dotSize)
+        clipRect(
+            left = 0f,
+            top = 0f,
+            right = sidePaddingPx + sideZoneWidth,
+            bottom = height
+        ) {
+            for (col in 0 until columnCount) {
+                val baseX = sidePaddingPx + (col * columnSpacingPx) + gridOffsetX
+                // Draw the main column with wrapping
+                val wrappedX = ((baseX - sidePaddingPx) % horizontalWrapWidth + horizontalWrapWidth) % horizontalWrapWidth + sidePaddingPx
+                renderColumn(wrappedX, gridOffsetY, verticalSpacingPx, height, finalColor, dotSize)
+                // Draw the wrap-around buddy column
+                renderColumn(wrappedX - horizontalWrapWidth, gridOffsetY, verticalSpacingPx, height, finalColor, dotSize)
+            }
         }
-        drawContext.canvas.restore()
 
         // Draw Right Side
-        drawContext.canvas.save()
-        drawContext.canvas.clipRect(rightRect.left, rightRect.top, rightRect.right, rightRect.bottom)
-        for (col in 0 until columnCount) {
-            val baseX = (width - sidePaddingPx - (col * columnSpacingPx)) + lateralShift
-            // Horizontal wrapping for the right side
-            val rightZoneStart = width - sidePaddingPx - sideZoneWidth
-            val wrappedX = ((baseX - rightZoneStart) % sideZoneWidth + sideZoneWidth) % sideZoneWidth + rightZoneStart
-            renderColumn(wrappedX, gridOffsetY, verticalSpacingPx, height, finalColor, dotSize)
-            renderColumn(wrappedX - sideZoneWidth, gridOffsetY, verticalSpacingPx, height, finalColor, dotSize)
-            renderColumn(wrappedX + sideZoneWidth, gridOffsetY, verticalSpacingPx, height, finalColor, dotSize)
+        clipRect(
+            left = width - (sidePaddingPx + sideZoneWidth),
+            top = 0f,
+            right = width,
+            bottom = height
+        ) {
+            for (col in 0 until columnCount) {
+                // For the right side, we offset from the right edge inwards
+                val baseX = (width - sidePaddingPx - (col * columnSpacingPx)) + gridOffsetX
+                val rightZoneStart = width - sidePaddingPx - sideZoneWidth
+                // Wrap baseX within a zone starting at rightZoneStart
+                val wrappedX = ((baseX - rightZoneStart) % horizontalWrapWidth + horizontalWrapWidth) % horizontalWrapWidth + rightZoneStart
+                renderColumn(wrappedX, gridOffsetY, verticalSpacingPx, height, finalColor, dotSize)
+                // Draw the wrap-around buddy column
+                renderColumn(wrappedX - horizontalWrapWidth, gridOffsetY, verticalSpacingPx, height, finalColor, dotSize)
+                renderColumn(wrappedX + horizontalWrapWidth, gridOffsetY, verticalSpacingPx, height, finalColor, dotSize)
+            }
         }
-        drawContext.canvas.restore()
     }
 }
 
