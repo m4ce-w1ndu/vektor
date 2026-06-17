@@ -21,7 +21,7 @@
     <string name="column_count">Antal Kolumner</string>
     <string name="columns_unit">kol</string>
 
-    <string name="footer_info">Vektor synkroniserar visuella r\u00f6relser med fysisk r\u00f6relse f\u00f6r att minska sensorisk konflikt. Skapad f\u00f6r alla, helt FOSS.</string>
+    <string name="footer_info">Vektor synkroniserar visuella r\u00f6relser med fysisk r\u00f6relse f\u00f6r att minska sensorisk konflikt. Skapad f\u00f6r alla.</string>
 
     <string name="unsupported_title">Milj\u00f6n st\u00f6ds inte</string>
     <string name="unsupported_message">Vektor kr\u00e4ver fysiska r\u00f6relsesensorer (accelerometer och gyroskop) f\u00f6r att fungera. Emulatorer, Waydroid och BlueStacks st\u00f6ds inte eftersom de inte kan tillhandah\u00e5lla verkliga r\u00f6relsedata fr\u00e5n fordon.</string>

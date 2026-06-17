@@ -21,7 +21,7 @@
     <string name="column_count">Numero Colonne</string>
     <string name="columns_unit">col</string>
 
-    <string name="footer_info">Vektor allinea i segnali di movimento visivi con il movimento fisico, riducendo il conflitto sensoriale. Creato per tutti, completamente FOSS.</string>
+    <string name="footer_info">Vektor allinea i segnali di movimento visivi con il movimento fisico, riducendo il conflitto sensoriale. Creato per tutti.</string>
 
     <string name="unsupported_title">Ambiente non supportato</string>
     <string name="unsupported_message">Vektor richiede sensori di movimento fisici (accelerometro e giroscopio) per funzionare. Emulatori, Waydroid e BlueStacks non sono supportati in quanto non possono fornire dati reali sul movimento del veicolo.</string>

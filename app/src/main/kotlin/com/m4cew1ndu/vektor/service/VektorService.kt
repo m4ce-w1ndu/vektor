@@ -328,9 +328,9 @@ fun MotionOverlayCanvas(
         val width = size.width
         val height = size.height
 
-        // Dot track styling
-        val verticalSpacingPx = 60 * density
-        val columnSpacingPx = 30 * density
+        // Dot track styling (tuned for iOS-like density)
+        val verticalSpacingPx = 100 * density
+        val columnSpacingPx = 45 * density
         val sidePaddingPx = 30 * density
         
         // Wrap vertical offset for seamless infinite vertical scrolling
