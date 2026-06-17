@@ -22,4 +22,7 @@
     <string name="columns_unit">Sp.</string>
 
     <string name="footer_info">Vektor gleicht visuelle Bewegungshinweise mit physischer Bewegung ab, um sensorische Konflikte zu reduzieren. F\u00fcr alle gemacht, komplett FOSS.</string>
+
+    <string name="unsupported_title">Nicht unterst\u00fctzte Umgebung</string>
+    <string name="unsupported_message">Vektor ben\u00f6tigt physische Bewegungssensoren (Beschleunigungsmesser und Gyroskop), um zu funktionieren. Emulatoren, Waydroid und BlueStacks werden nicht unterst\u00fctzt, da sie keine echten Fahrzeugbewegungsdaten liefern k\u00f6nnen.</string>
 </resources>

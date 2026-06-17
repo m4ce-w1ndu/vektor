@@ -22,4 +22,7 @@
     <string name="columns_unit">cols</string>
 
     <string name="footer_info">Vektor aligns visual motion clues with physical movement, reducing the sensory conflict that triggers vehicle motion sickness. Made for everyone, completely FOSS.</string>
+
+    <string name="unsupported_title">Unsupported Environment</string>
+    <string name="unsupported_message">Vektor requires physical motion sensors (accelerometer and gyroscope) to function. Emulators, Waydroid, and BlueStacks are not supported as they cannot provide real vehicle motion data.</string>
 </resources>
