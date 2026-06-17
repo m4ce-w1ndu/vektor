@@ -26,7 +26,6 @@ import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.platform.ComposeView
 import androidx.core.app.NotificationCompat
 import androidx.lifecycle.Lifecycle
@@ -244,7 +243,6 @@ class VektorService : Service(), LifecycleRegistryOwner, SavedStateRegistryOwner
             setViewTreeSavedStateRegistryOwner(this@VektorService)
             
             setContent {
-                val density = androidx.compose.ui.platform.LocalDensity.current.density
                 var lastTime by remember { mutableLongStateOf(0L) }
                 
                 LaunchedEffect(Unit) {
