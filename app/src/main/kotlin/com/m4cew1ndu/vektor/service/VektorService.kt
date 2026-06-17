@@ -113,10 +113,26 @@ class VektorService : Service(), LifecycleRegistryOwner, SavedStateRegistryOwner
                     // In flat mode (Y is forward), Forward Accel = +Y, we need negative force.
                     // In upright mode (Z is inward), Forward Accel = -Z, we need negative force.
                     // Unified Longitudinal Logic:
-                    // Car accelerating forward -> Visual world moves back -> Dots flow UP (-offsetY).
-                    // Formula (linearY - linearZ) produces negative values for forward accel
-                    // across both flat and upright orientations.
-                    accelY.floatValue = (linearY - linearZ) * sensitivity.floatValue * 55f
+                    // We want: Forward Accel -> Dots move UP (-offsetY)
+                    // Upright (mount): Forward Accel is -Z linear.
+                    // Flat: Forward Accel is +Y linear.
+                    // (linearY - linearZ) produces positive for forward accel.
+                    // Let's use negative of that to get negative velocity for UP flow.
+                    val longitudinalForce = -(linearY - linearZ)
+                    
+                    // Apply a deadzone to ignore sensor noise when sitting on a table
+                    if (kotlin.math.abs(longitudinalForce) > 0.05f) {
+                        accelY.floatValue = longitudinalForce * sensitivity.floatValue * 40f
+                    } else {
+                        accelY.floatValue = 0f
+                    }
+
+                    // Sideways deadzone
+                    if (kotlin.math.abs(linearX) > 0.05f) {
+                        accelX.floatValue = -linearX * sensitivity.floatValue * 8f
+                    } else {
+                        accelX.floatValue = 0f
+                    }
                 }
                 Sensor.TYPE_GYROSCOPE -> {
                     // Gyroscope can be integrated here for rotational drift compensation
@@ -238,19 +254,19 @@ class VektorService : Service(), LifecycleRegistryOwner, SavedStateRegistryOwner
                                 val dt = (time - lastTime) / 1e9f
                                 
                                 // Momentum-based flow: Acceleration adds to velocity, velocity decays
-                                // Increased background speed (30dp/s) for "always alive" feel
-                                val backgroundSpeed = 30f * density
+                                // Deceleration is aggressive when no acceleration is present to prevent drift
+                                val friction = if (accelX.floatValue == 0f && accelY.floatValue == 0f) 0.85f else 0.96f
                                 
-                                velocityX.floatValue = (velocityX.floatValue + accelX.floatValue * dt) * 0.95f
-                                velocityY.floatValue = (velocityY.floatValue + accelY.floatValue * dt) * 0.95f
-                                
-                                // Apply continuous movement
-                                offsetX.floatValue += velocityX.floatValue * dt
-                                offsetY.floatValue += (velocityY.floatValue + backgroundSpeed) * dt
+                                velocityX.floatValue = (velocityX.floatValue + accelX.floatValue * dt) * friction
+                                velocityY.floatValue = (velocityY.floatValue + accelY.floatValue * dt) * friction
 
-                                // Gentle "return to home" force for horizontal tracks so they don't stay drifted
-                                if (accelX.floatValue == 0f) {
-                                    offsetX.floatValue *= 0.98f 
+                                // Continuously scroll the dots based on current velocity
+                                offsetX.floatValue += velocityX.floatValue * dt
+                                offsetY.floatValue += velocityY.floatValue * dt
+                                
+                                // Reset horizontal position gently if it drifted too far and we are stationary
+                                if (accelX.floatValue == 0f && kotlin.math.abs(velocityX.floatValue) < 0.1f) {
+                                    offsetX.floatValue *= 0.95f
                                 }
                             }
                             lastTime = time
@@ -314,57 +330,29 @@ fun MotionOverlayCanvas(
         val width = size.width
         val height = size.height
 
-        // iOS Styling: Fixed Side Tracks
+        // Dot track styling
         val verticalSpacingPx = 60 * density
         val columnSpacingPx = 30 * density
-        val sidePaddingPx = 20 * density
+        val sidePaddingPx = 30 * density
         
         // Wrap vertical offset for seamless infinite vertical scrolling
         val gridOffsetY = (offsetY % verticalSpacingPx + verticalSpacingPx) % verticalSpacingPx
 
-        // Horizontal Wrapping Tuning
-        // We define a fixed width for the side track zone (e.g., space for 3 cols + margins)
-        val wrapWidthPx = 100 * density
-        // Calculate shift within this fixed zone
-        val gridOffsetX = (offsetX % wrapWidthPx + wrapWidthPx) % wrapWidthPx
+        // Lateral shift from turning
+        val lateralShift = offsetX
 
-        // Draw Left Side
-        clipRect(
-            left = 0f,
-            top = 0f,
-            right = sidePaddingPx + wrapWidthPx,
-            bottom = height
-        ) {
-            for (col in 0 until columnCount) {
-                // Base position for this column
-                val baseX = sidePaddingPx + (col * columnSpacingPx) + gridOffsetX
-                // Wrap it strictly within the [sidePadding, sidePadding + wrapWidth] zone
-                val wrappedX = ((baseX - sidePaddingPx) % wrapWidthPx + wrapWidthPx) % wrapWidthPx + sidePaddingPx
-                
-                renderColumn(wrappedX, gridOffsetY, verticalSpacingPx, height, finalColor, dotSize)
-                // Draw wrapping buddy column (exactly one wrapWidth apart)
-                renderColumn(wrappedX - wrapWidthPx, gridOffsetY, verticalSpacingPx, height, finalColor, dotSize)
-            }
-        }
-
-        // Draw Right Side
-        clipRect(
-            left = width - (sidePaddingPx + wrapWidthPx),
-            top = 0f,
-            right = width,
-            bottom = height
-        ) {
-            val rightTrackStart = width - sidePaddingPx - wrapWidthPx
-            for (col in 0 until columnCount) {
-                // Mirrored base position
-                val baseX = (width - sidePaddingPx - (col * columnSpacingPx)) + gridOffsetX
-                val wrappedX = ((baseX - rightTrackStart) % wrapWidthPx + wrapWidthPx) % wrapWidthPx + rightTrackStart
-                
-                renderColumn(wrappedX, gridOffsetY, verticalSpacingPx, height, finalColor, dotSize)
-                // Draw wrapping buddy column
-                renderColumn(wrappedX - wrapWidthPx, gridOffsetY, verticalSpacingPx, height, finalColor, dotSize)
-                renderColumn(wrappedX + wrapWidthPx, gridOffsetY, verticalSpacingPx, height, finalColor, dotSize)
-            }
+        // Side rendering with explicit column placement
+        // This guarantees that 1 column = 1 dot track per side
+        for (col in 0 until columnCount) {
+            val colOffset = col * columnSpacingPx
+            
+            // Left Side Track
+            val leftX = sidePaddingPx + colOffset + lateralShift
+            renderColumn(leftX, gridOffsetY, verticalSpacingPx, height, finalColor, dotSize)
+            
+            // Right Side Track (mirrored)
+            val rightX = width - sidePaddingPx - colOffset + lateralShift
+            renderColumn(rightX, gridOffsetY, verticalSpacingPx, height, finalColor, dotSize)
         }
     }
 }
