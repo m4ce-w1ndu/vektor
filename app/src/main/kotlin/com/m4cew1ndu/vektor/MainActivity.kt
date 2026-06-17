@@ -19,6 +19,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -33,6 +35,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.m4cew1ndu.vektor.service.VektorService
 import com.m4cew1ndu.vektor.ui.theme.VektorTheme
+import com.m4cew1ndu.vektor.util.EnvironmentUtils
 import kotlin.math.roundToInt
 import androidx.core.net.toUri
 import androidx.core.content.edit
@@ -45,14 +48,19 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        val isUnsupported = EnvironmentUtils.isUnsupportedEnvironment()
         setContent {
             VektorTheme {
-                MainScreen(
-                    hasPermission = hasOverlayPermission.value,
-                    isServiceRunning = isServiceRunningState.value,
-                    onRequestPermission = { requestOverlayPermission() },
-                    onToggleService = { toggleService() }
-                )
+                if (isUnsupported) {
+                    UnsupportedEnvironmentScreen()
+                } else {
+                    MainScreen(
+                        hasPermission = hasOverlayPermission.value,
+                        isServiceRunning = isServiceRunningState.value,
+                        onRequestPermission = { requestOverlayPermission() },
+                        onToggleService = { toggleService() }
+                    )
+                }
             }
         }
     }
@@ -83,6 +91,44 @@ class MainActivity : ComponentActivity() {
             } else {
                 requestOverlayPermission()
             }
+        }
+    }
+}
+
+@Composable
+fun UnsupportedEnvironmentScreen() {
+    Surface(
+        modifier = Modifier.fillMaxSize(),
+        color = MaterialTheme.colorScheme.background
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(32.dp),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Icon(
+                imageVector = Icons.Rounded.Warning,
+                contentDescription = null,
+                modifier = Modifier.size(64.dp),
+                tint = MaterialTheme.colorScheme.error
+            )
+            Spacer(modifier = Modifier.height(24.dp))
+            Text(
+                text = stringResource(R.string.unsupported_title),
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.error,
+                textAlign = TextAlign.Center
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = stringResource(R.string.unsupported_message),
+                fontSize = 16.sp,
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.8f),
+                textAlign = TextAlign.Center
+            )
         }
     }
 }
