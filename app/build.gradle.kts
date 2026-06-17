@@ -11,8 +11,8 @@ android {
         applicationId = "com.m4cew1ndu.vektor"
         minSdk = 26
         targetSdk = 37
-        versionCode = (project.findProperty("versionCode") as? String)?.toInt() ?: 8
-        versionName = project.findProperty("versionName") as? String ?: "0.6.0"
+        versionCode = 8
+        versionName = "0.6.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
