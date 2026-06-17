@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Vektor</string>
+    <string name="service_notification_channel_name">Сервис движения Vektor</string>
+    <string name="service_notification_title">Vektor активен</string>
+    <string name="service_notification_description">Vektor работает для противодействия укачиванию.</string>
+
+    <string name="cues_active">Сигналы активны</string>
+    <string name="cues_paused">Сигналы приостановлены</string>
+    <string name="cues_active_desc">Точки выравниваются с движением.</string>
+    <string name="cues_paused_desc">Сервис бездействует. Включите для запуска.</string>
+
+    <string name="permission_required">Требуется разрешение</string>
+    <string name="permission_description">Vektor требуется разрешение \"Отображение поверх других приложений\", чтобы показывать точки. Нажмите здесь, чтобы предоставить его.</string>
+
+    <string name="preferences">Настройки</string>
+    <string name="dot_color">Цвет точек</string>
+    <string name="dot_size">Размер точек</string>
+    <string name="opacity">Прозрачность</string>
+    <string name="motion_sensitivity">Чувствительность к движению</string>
+    <string name="column_count">Количество столбцов</string>
+    <string name="columns_unit">стлб.</string>
+
+    <string name="footer_info">Vektor совмещает визуальные сигналы движения с физическим перемещением, уменьшая сенсорный конфликт, вызывающий укачивание. Сделано для всех.</string>
+
+    <string name="unsupported_title">Неподдерживаемая среда</string>
+    <string name="unsupported_message">Vektor требуются физические датчики движения (акселерометр и гироскоп). Эмуляторы, Waydroid и BlueStacks не поддерживаются, так как они не могут предоставить реальные данные о движении автомобиля.</string>
+</resources>
