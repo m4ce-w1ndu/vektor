@@ -329,8 +329,9 @@ fun MotionOverlayCanvas(
         val width = size.width
         val height = size.height
 
-        // iOS Styling: Highly tuned spacing from video analysis
-        val verticalSpacingPx = 120 * density
+        // Reference-based tuning:
+        // Sparse vertical spacing, clean peripheral tracks.
+        val verticalSpacingPx = 140 * density
         val columnSpacingPx = 50 * density
         val sidePaddingPx = 35 * density
         
@@ -367,39 +368,19 @@ private fun DrawScope.renderGlowDotColumn(
     while (y < height + spacingPx) {
         val drawY = y + gridOffsetY
         
-        // iOS Emulation: Cross-pattern with fading
-        // We render 4 dots in a cross (+) around the center point, 
-        // with their opacity oscillating based on their Y position or time.
-        
-        val crossOffset = 15f * density
-        val timeFactor = (System.currentTimeMillis() % 2000) / 2000f
-        
-        // Helper to draw a fading glow dot
-        fun drawCrossDot(offsetX: Float, offsetY: Float, alphaMultiplier: Float) {
-            val dotAlpha = color.alpha * alphaMultiplier
-            val fadeColor = color.copy(alpha = dotAlpha)
-            
-            drawCircle(
-                color = fadeColor.copy(alpha = dotAlpha * 0.3f),
-                radius = dotSize * 0.8f,
-                center = Offset(baseX + offsetX, drawY + offsetY)
-            )
-            drawCircle(
-                color = fadeColor,
-                radius = dotSize / 2,
-                center = Offset(baseX + offsetX, drawY + offsetY)
-            )
-        }
-
-        // Calculate phase based on Y position to create the "fading through" effect
-        val phase = ((drawY / height) * 2f * Math.PI.toFloat() + (timeFactor * 2f * Math.PI.toFloat()))
-        
-        // Cross pattern (+): Top, Bottom, Left, Right
-        drawCrossDot(0f, -crossOffset, (kotlin.math.sin(phase).coerceIn(0f, 1f)))
-        drawCrossDot(0f, crossOffset, (kotlin.math.cos(phase).coerceIn(0f, 1f)))
-        drawCrossDot(-crossOffset, 0f, (kotlin.math.sin(phase + 0.5f).coerceIn(0f, 1f)))
-        drawCrossDot(crossOffset, 0f, (kotlin.math.cos(phase + 0.5f).coerceIn(0f, 1f)))
-
+        // Visual Style from reference: Small dot with a very subtle outer glow
+        // Outer glow
+        drawCircle(
+            color = color.copy(alpha = color.alpha * 0.2f),
+            radius = dotSize * 0.7f,
+            center = Offset(baseX, drawY)
+        )
+        // Core dot
+        drawCircle(
+            color = color,
+            radius = dotSize / 2,
+            center = Offset(baseX, drawY)
+        )
         y += spacingPx
     }
 }
