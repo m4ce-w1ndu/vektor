@@ -345,18 +345,23 @@ fun MotionOverlayCanvas(
         for (col in 0 until columnCount) {
             val colOffset = col * columnSpacingPx
             
+            // Staggering: Offset adjacent columns by half the vertical spacing
+            // to create the "alternative" appearance seen in the reference.
+            val staggerOffset = if (col % 2 != 0) verticalSpacingPx / 2f else 0f
+            val currentGridOffsetY = (gridOffsetY + staggerOffset) % verticalSpacingPx
+
             // Left Side Track
             val leftX = sidePaddingPx + colOffset + lateralShift
-            renderGlowDotColumn(leftX, gridOffsetY, verticalSpacingPx, height, finalColor, dotSize)
+            renderDotColumn(leftX, currentGridOffsetY, verticalSpacingPx, height, finalColor, dotSize)
             
             // Right Side Track (mirrored)
             val rightX = width - sidePaddingPx - colOffset + lateralShift
-            renderGlowDotColumn(rightX, gridOffsetY, verticalSpacingPx, height, finalColor, dotSize)
+            renderDotColumn(rightX, currentGridOffsetY, verticalSpacingPx, height, finalColor, dotSize)
         }
     }
 }
 
-private fun DrawScope.renderGlowDotColumn(
+private fun DrawScope.renderDotColumn(
     baseX: Float,
     gridOffsetY: Float,
     spacingPx: Float,
