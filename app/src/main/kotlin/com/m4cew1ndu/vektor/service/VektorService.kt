@@ -70,7 +70,6 @@ class VektorService : Service(), LifecycleRegistryOwner, SavedStateRegistryOwner
     private val dotColorValue = mutableLongStateOf(0xFF4FD8EB)
     private val dotOpacity = mutableFloatStateOf(0.6f)
     private val sensitivity = mutableFloatStateOf(35f)
-    private val columnCount = mutableIntStateOf(2)
 
     private val prefsListener = android.content.SharedPreferences.OnSharedPreferenceChangeListener { _, _ ->
         loadSettings()
@@ -201,7 +200,6 @@ class VektorService : Service(), LifecycleRegistryOwner, SavedStateRegistryOwner
         dotSizePx.floatValue = prefs.getFloat("dot_size", 16f)
         dotOpacity.floatValue = prefs.getFloat("dot_opacity", 0.5f)
         sensitivity.floatValue = prefs.getFloat("sensitivity", 35f)
-        columnCount.intValue = prefs.getInt("column_count", 2)
         dotColorValue.longValue = prefs.getLong("dot_color", 0xFF4FD8EB)
     }
 
@@ -278,7 +276,6 @@ class VektorService : Service(), LifecycleRegistryOwner, SavedStateRegistryOwner
                     offsetY = offsetY.floatValue,
                     dotSize = dotSizePx.floatValue,
                     dotOpacity = dotOpacity.floatValue,
-                    columnCount = columnCount.intValue,
                     colorHex = dotColorValue.longValue
                 )
             }
@@ -319,7 +316,6 @@ fun MotionOverlayCanvas(
     offsetY: Float,
     dotSize: Float,
     dotOpacity: Float,
-    columnCount: Int,
     colorHex: Long
 ) {
     val baseColor = Color(colorHex)
@@ -329,26 +325,29 @@ fun MotionOverlayCanvas(
         val width = size.width
         val height = size.height
 
-        // Reference-based tuning:
-        // Sparse vertical spacing, clean peripheral tracks.
+        // Final Reference tuning:
+        // Measurements show a staggered "checkerboard" flow.
         val verticalSpacingPx = 140 * density
-        val columnSpacingPx = 50 * density
+        val columnSpacingPx = 45 * density
         val sidePaddingPx = 35 * density
         
-        // Wrap vertical offset for seamless infinite vertical scrolling
-        val gridOffsetY = (offsetY % verticalSpacingPx + verticalSpacingPx) % verticalSpacingPx
+        // Use a wide wrap buffer to ensure seamless reappearance
+        val wrapHeight = verticalSpacingPx
+        val gridOffsetY = (offsetY % wrapHeight + wrapHeight) % wrapHeight
 
-        // Lateral shift from turning
+        // Turning shifts the tracks laterally
         val lateralShift = offsetX
 
-        // Side rendering with explicit column placement
-        for (col in 0 until columnCount) {
+        // Side rendering with inherent staggering
+        // We draw two main columns on each side that are staggered vertically.
+        // col 0 and col 1 represent the dual tracks on each side.
+        for (col in 0..1) {
             val colOffset = col * columnSpacingPx
             
-            // Staggering: Offset adjacent columns by half the vertical spacing
-            // to create the "alternative" appearance seen in the reference.
-            val staggerOffset = if (col % 2 != 0) verticalSpacingPx / 2f else 0f
-            val currentGridOffsetY = (gridOffsetY + staggerOffset) % verticalSpacingPx
+            // Staggering: Every second dot vertically is offset, but also 
+            // every adjacent column is offset by half height.
+            val colStagger = if (col % 2 != 0) verticalSpacingPx / 2f else 0f
+            val currentGridOffsetY = (gridOffsetY + colStagger) % verticalSpacingPx
 
             // Left Side Track
             val leftX = sidePaddingPx + colOffset + lateralShift

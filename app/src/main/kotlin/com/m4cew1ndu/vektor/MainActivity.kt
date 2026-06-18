@@ -147,7 +147,6 @@ fun MainScreen(
     var dotSize by remember { mutableFloatStateOf(prefs.getFloat("dot_size", 16f)) }
     var dotOpacity by remember { mutableFloatStateOf(prefs.getFloat("dot_opacity", 0.5f)) }
     var sensitivity by remember { mutableFloatStateOf(prefs.getFloat("sensitivity", 35f)) }
-    var columnCount by remember { mutableIntStateOf(prefs.getInt("column_count", 2)) }
     var dotColorHex by remember { mutableLongStateOf(prefs.getLong("dot_color", 0xFF4FD8EB)) }
 
     val colorsList = listOf(
@@ -419,35 +418,6 @@ fun MainScreen(
                         )
                     }
 
-                    // Column Count Slider
-                    Column {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text(
-                                text = stringResource(R.string.column_count),
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                            Text(
-                                text = "$columnCount ${stringResource(R.string.columns_unit)}",
-                                fontSize = 13.sp,
-                                color = MaterialTheme.colorScheme.primary,
-                                fontWeight = FontWeight.SemiBold
-                            )
-                        }
-                        Slider(
-                            value = columnCount.toFloat(),
-                            onValueChange = { newValue ->
-                                columnCount = newValue.roundToInt()
-                                prefs.edit { putInt("column_count", newValue.roundToInt()) }
-                            },
-                            valueRange = 1f..3f,
-                            steps = 1
-                        )
-                    }
                 }
             }
 
