@@ -26,6 +26,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.platform.ComposeView
 import androidx.core.app.NotificationCompat
 import androidx.lifecycle.Lifecycle
@@ -324,47 +325,47 @@ fun MotionOverlayCanvas(
         val width = size.width
         val height = size.height
 
-        // Dots occupy fixed 'slots' but oscillate locally to create the movement sensation.
+        // Final measurements from reference video analysis:
         val verticalSpacingPx = 140 * density
         val columnSpacingPx = 45 * density
         val sidePaddingPx = 35 * density
         
-        // Turning shifts the tracks laterally but they stay as fixed columns
+        // Horizontal constraint: Exactly 2 columns wide
+        val sideZoneWidth = columnSpacingPx * 2
+        
+        // Turning shifts the tracks, but we will CLIP the dots 
+        // to stay strictly within the left and right side gutters.
         val lateralShift = offsetX
 
-        // We render dual tracks on each side (0 and 1)
-        for (track in 0..1) {
-            val trackXOffset = track * columnSpacingPx
-            
-            // Staggering: Every second track is offset vertically by half spacing
-            val trackYStagger = if (track % 2 != 0) verticalSpacingPx / 2f else 0f
+        // Define the fixed "Gutter" areas where dots are allowed to appear.
+        // These never move, preventing dots from invading the center or leaving edges.
+        val leftGutter = androidx.compose.ui.geometry.Rect(0f, 0f, sidePaddingPx + sideZoneWidth, height)
+        val rightGutter = androidx.compose.ui.geometry.Rect(width - (sidePaddingPx + sideZoneWidth), 0f, width, height)
 
-            // Left Side Track
-            renderStationaryTrack(
-                baseX = sidePaddingPx + trackXOffset + lateralShift,
-                yOffset = offsetY, // This drives the local oscillation/flow
-                spacingPx = verticalSpacingPx,
-                height = height,
-                color = finalColor,
-                dotSize = dotSize,
-                stagger = trackYStagger
-            )
-            
-            // Right Side Track (mirrored)
-            renderStationaryTrack(
-                baseX = width - sidePaddingPx - trackXOffset + lateralShift,
-                yOffset = offsetY,
-                spacingPx = verticalSpacingPx,
-                height = height,
-                color = finalColor,
-                dotSize = dotSize,
-                stagger = trackYStagger
-            )
+        // Render Left Side
+        clipRect(leftGutter.left, leftGutter.top, leftGutter.right, leftGutter.bottom) {
+            for (track in 0..1) {
+                val trackX = sidePaddingPx + (track * columnSpacingPx) + lateralShift
+                val trackYStagger = if (track % 2 != 0) verticalSpacingPx / 2f else 0f
+                renderInfiniteTrack(trackX, offsetY, verticalSpacingPx, height, finalColor, dotSize, trackYStagger)
+            }
+        }
+
+        // Render Right Side
+        clipRect(rightGutter.left, rightGutter.top, rightGutter.right, rightGutter.bottom) {
+            for (track in 0..1) {
+                val trackX = (width - sidePaddingPx - (track * columnSpacingPx)) + lateralShift
+                val trackYStagger = if (track % 2 != 0) verticalSpacingPx / 2f else 0f
+                renderInfiniteTrack(trackX, offsetY, verticalSpacingPx, height, finalColor, dotSize, trackYStagger)
+            }
         }
     }
 }
 
-private fun DrawScope.renderStationaryTrack(
+/**
+ * Renders a vertical line of dots that loops infinitely within vertical spacing.
+ */
+private fun DrawScope.renderInfiniteTrack(
     baseX: Float,
     yOffset: Float,
     spacingPx: Float,
@@ -373,14 +374,14 @@ private fun DrawScope.renderStationaryTrack(
     dotSize: Float,
     stagger: Float
 ) {
-    // The 'movement' is a local loop within the spacing boundary
+    // Local modulo loop for seamless vertical movement
     val localScrollY = (yOffset % spacingPx + spacingPx) % spacingPx
     
     var y = -spacingPx
     while (y < height + spacingPx) {
         val drawY = y + localScrollY + stagger
         
-        // Visual Style: Small dot with subtle outer glow
+        // Visual Style: Small sharp dot with subtle outer glow
         drawCircle(
             color = color.copy(alpha = color.alpha * 0.2f),
             radius = dotSize * 0.7f,
