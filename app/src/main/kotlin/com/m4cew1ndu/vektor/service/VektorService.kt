@@ -324,61 +324,68 @@ fun MotionOverlayCanvas(
         val width = size.width
         val height = size.height
 
-        // Final Reference tuning:
-        // Measurements show a staggered "checkerboard" flow.
+        // Dots occupy fixed 'slots' but oscillate locally to create the movement sensation.
         val verticalSpacingPx = 140 * density
         val columnSpacingPx = 45 * density
         val sidePaddingPx = 35 * density
         
-        // Use a wide wrap buffer to ensure seamless reappearance
-        val wrapHeight = verticalSpacingPx
-        val gridOffsetY = (offsetY % wrapHeight + wrapHeight) % wrapHeight
-
-        // Turning shifts the tracks laterally
+        // Turning shifts the tracks laterally but they stay as fixed columns
         val lateralShift = offsetX
 
-        // Side rendering with inherent staggering
-        // We draw two main columns on each side that are staggered vertically.
-        // col 0 and col 1 represent the dual tracks on each side.
-        for (col in 0..1) {
-            val colOffset = col * columnSpacingPx
+        // We render dual tracks on each side (0 and 1)
+        for (track in 0..1) {
+            val trackXOffset = track * columnSpacingPx
             
-            // Staggering: Every second dot vertically is offset, but also 
-            // every adjacent column is offset by half height.
-            val colStagger = if (col % 2 != 0) verticalSpacingPx / 2f else 0f
-            val currentGridOffsetY = (gridOffsetY + colStagger) % verticalSpacingPx
+            // Staggering: Every second track is offset vertically by half spacing
+            val trackYStagger = if (track % 2 != 0) verticalSpacingPx / 2f else 0f
 
             // Left Side Track
-            val leftX = sidePaddingPx + colOffset + lateralShift
-            renderDotColumn(leftX, currentGridOffsetY, verticalSpacingPx, height, finalColor, dotSize)
+            renderStationaryTrack(
+                baseX = sidePaddingPx + trackXOffset + lateralShift,
+                yOffset = offsetY, // This drives the local oscillation/flow
+                spacingPx = verticalSpacingPx,
+                height = height,
+                color = finalColor,
+                dotSize = dotSize,
+                stagger = trackYStagger
+            )
             
             // Right Side Track (mirrored)
-            val rightX = width - sidePaddingPx - colOffset + lateralShift
-            renderDotColumn(rightX, currentGridOffsetY, verticalSpacingPx, height, finalColor, dotSize)
+            renderStationaryTrack(
+                baseX = width - sidePaddingPx - trackXOffset + lateralShift,
+                yOffset = offsetY,
+                spacingPx = verticalSpacingPx,
+                height = height,
+                color = finalColor,
+                dotSize = dotSize,
+                stagger = trackYStagger
+            )
         }
     }
 }
 
-private fun DrawScope.renderDotColumn(
+private fun DrawScope.renderStationaryTrack(
     baseX: Float,
-    gridOffsetY: Float,
+    yOffset: Float,
     spacingPx: Float,
     height: Float,
     color: Color,
-    dotSize: Float
+    dotSize: Float,
+    stagger: Float
 ) {
+    // The 'movement' is a local loop within the spacing boundary
+    val localScrollY = (yOffset % spacingPx + spacingPx) % spacingPx
+    
     var y = -spacingPx
     while (y < height + spacingPx) {
-        val drawY = y + gridOffsetY
+        val drawY = y + localScrollY + stagger
         
-        // Visual Style from reference: Small dot with a very subtle outer glow
-        // Outer glow
+        // Visual Style: Small dot with subtle outer glow
         drawCircle(
             color = color.copy(alpha = color.alpha * 0.2f),
             radius = dotSize * 0.7f,
             center = Offset(baseX, drawY)
         )
-        // Core dot
         drawCircle(
             color = color,
             radius = dotSize / 2,
