@@ -26,6 +26,7 @@ import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.platform.ComposeView
 import androidx.core.app.NotificationCompat
 import androidx.lifecycle.Lifecycle
@@ -328,10 +329,10 @@ fun MotionOverlayCanvas(
         val width = size.width
         val height = size.height
 
-        // Dot track styling (tuned for iOS-like density)
-        val verticalSpacingPx = 100 * density
-        val columnSpacingPx = 45 * density
-        val sidePaddingPx = 30 * density
+        // iOS Styling: Highly tuned spacing from video analysis
+        val verticalSpacingPx = 120 * density
+        val columnSpacingPx = 50 * density
+        val sidePaddingPx = 35 * density
         
         // Wrap vertical offset for seamless infinite vertical scrolling
         val gridOffsetY = (offsetY % verticalSpacingPx + verticalSpacingPx) % verticalSpacingPx
@@ -340,22 +341,21 @@ fun MotionOverlayCanvas(
         val lateralShift = offsetX
 
         // Side rendering with explicit column placement
-        // This guarantees that 1 column = 1 dot track per side
         for (col in 0 until columnCount) {
             val colOffset = col * columnSpacingPx
             
             // Left Side Track
             val leftX = sidePaddingPx + colOffset + lateralShift
-            renderColumn(leftX, gridOffsetY, verticalSpacingPx, height, finalColor, dotSize)
+            renderGlowDotColumn(leftX, gridOffsetY, verticalSpacingPx, height, finalColor, dotSize)
             
             // Right Side Track (mirrored)
             val rightX = width - sidePaddingPx - colOffset + lateralShift
-            renderColumn(rightX, gridOffsetY, verticalSpacingPx, height, finalColor, dotSize)
+            renderGlowDotColumn(rightX, gridOffsetY, verticalSpacingPx, height, finalColor, dotSize)
         }
     }
 }
 
-private fun androidx.compose.ui.graphics.drawscope.DrawScope.renderColumn(
+private fun androidx.compose.ui.graphics.drawscope.DrawScope.renderGlowDotColumn(
     baseX: Float,
     gridOffsetY: Float,
     spacingPx: Float,
@@ -366,11 +366,40 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.renderColumn(
     var y = -spacingPx
     while (y < height + spacingPx) {
         val drawY = y + gridOffsetY
-        drawCircle(
-            color = color,
-            radius = dotSize / 2,
-            center = Offset(baseX, drawY)
-        )
+        
+        // iOS Emulation: Cross-pattern with fading
+        // We render 4 dots in a cross (+) around the center point, 
+        // with their opacity oscillating based on their Y position or time.
+        
+        val crossOffset = 15f * density
+        val timeFactor = (System.currentTimeMillis() % 2000) / 2000f
+        
+        // Helper to draw a fading glow dot
+        fun drawCrossDot(offsetX: Float, offsetY: Float, alphaMultiplier: Float) {
+            val dotAlpha = color.alpha * alphaMultiplier
+            val fadeColor = color.copy(alpha = dotAlpha)
+            
+            drawCircle(
+                color = fadeColor.copy(alpha = dotAlpha * 0.3f),
+                radius = dotSize * 0.8f,
+                center = Offset(baseX + offsetX, drawY + offsetY)
+            )
+            drawCircle(
+                color = fadeColor,
+                radius = dotSize / 2,
+                center = Offset(baseX + offsetX, drawY + offsetY)
+            )
+        }
+
+        // Calculate phase based on Y position to create the "fading through" effect
+        val phase = ((drawY / height) * 2f * Math.PI.toFloat() + (timeFactor * 2f * Math.PI.toFloat())).toFloat()
+        
+        // Cross pattern (+): Top, Bottom, Left, Right
+        drawCrossDot(0f, -crossOffset, (kotlin.math.sin(phase).coerceIn(0f, 1f)))
+        drawCrossDot(0f, crossOffset, (kotlin.math.cos(phase).coerceIn(0f, 1f)))
+        drawCrossDot(-crossOffset, 0f, (kotlin.math.sin(phase + 0.5f).coerceIn(0f, 1f)))
+        drawCrossDot(crossOffset, 0f, (kotlin.math.cos(phase + 0.5f).coerceIn(0f, 1f)))
+
         y += spacingPx
     }
 }
