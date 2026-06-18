@@ -355,7 +355,7 @@ fun MotionOverlayCanvas(
     }
 }
 
-private fun androidx.compose.ui.graphics.drawscope.DrawScope.renderGlowDotColumn(
+private fun DrawScope.renderGlowDotColumn(
     baseX: Float,
     gridOffsetY: Float,
     spacingPx: Float,
@@ -392,7 +392,7 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.renderGlowDotColumn
         }
 
         // Calculate phase based on Y position to create the "fading through" effect
-        val phase = ((drawY / height) * 2f * Math.PI.toFloat() + (timeFactor * 2f * Math.PI.toFloat())).toFloat()
+        val phase = ((drawY / height) * 2f * Math.PI.toFloat() + (timeFactor * 2f * Math.PI.toFloat()))
         
         // Cross pattern (+): Top, Bottom, Left, Right
         drawCrossDot(0f, -crossOffset, (kotlin.math.sin(phase).coerceIn(0f, 1f)))
