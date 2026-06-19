@@ -351,8 +351,9 @@ private fun DrawScope.renderContinuousTrack(
         val drawY = y + localScrollY + stagger
         
         // Appearance/Disappearance Fading (2D)
-        val vMargin = 150f
-        val hMargin = 25f
+        // Adjust fade margins based on dot size to ensure animation is visible for larger dots
+        val vMargin = 150f + (dotSize * 1.5f)
+        val hMargin = 25f + (dotSize * 0.5f)
         
         val vAlpha = when {
             drawY < vMargin -> (drawY / vMargin).coerceIn(0f, 1f)
