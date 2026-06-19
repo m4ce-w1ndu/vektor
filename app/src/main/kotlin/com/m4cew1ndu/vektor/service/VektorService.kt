@@ -87,46 +87,31 @@ class VektorService : Service(), LifecycleRegistryOwner, SavedStateRegistryOwner
     private var gravityX = 0f
     private var gravityY = 0f
     private var gravityZ = 0f
-    private val alpha = 0.98f // Increased for much better gravity stability
+    private val alpha = 0.98f
 
     private val sensorListener = object : SensorEventListener {
         override fun onSensorChanged(event: SensorEvent) {
             when (event.sensor.type) {
                 Sensor.TYPE_ACCELEROMETER -> {
-                    // Extract gravity with a high-quality low-pass filter
                     gravityX = alpha * gravityX + (1 - alpha) * event.values[0]
                     gravityY = alpha * gravityY + (1 - alpha) * event.values[1]
                     gravityZ = alpha * gravityZ + (1 - alpha) * event.values[2]
 
-                    // Remove gravity to get pure linear acceleration
                     val linearX = event.values[0] - gravityX
                     val linearY = event.values[1] - gravityY
                     val linearZ = event.values[2] - gravityZ
 
-                    // iOS Physics: Acceleration translates to velocity (flow speed)
-                    // Sideways inertia (-linearX)
                     accelX.floatValue = -linearX * sensitivity.floatValue * 5f
                     
-                    // Unified Longitudinal Logic:
-                    // Accelerating Forward -> Dots flow UP (-offsetY).
-                    // In flat mode (Y is forward), Forward Accel = +Y, we need negative force.
-                    // In upright mode (Z is inward), Forward Accel = -Z, we need negative force.
-                    // Unified Longitudinal Logic:
-                    // We want: Forward Accel -> Dots move UP (-offsetY)
-                    // Upright (mount): Forward Accel is -Z linear.
-                    // Flat: Forward Accel is +Y linear.
-                    // (linearY - linearZ) produces positive for forward accel.
-                    // Let's use negative of that to get negative velocity for UP flow.
+                    // Unified Longitudinal Logic: Forward Accel -> Dots flow UP (-offsetY)
                     val longitudinalForce = -(linearY - linearZ)
                     
-                    // Apply a deadzone to ignore sensor noise when sitting on a table
                     if (kotlin.math.abs(longitudinalForce) > 0.05f) {
                         accelY.floatValue = longitudinalForce * sensitivity.floatValue * 40f
                     } else {
                         accelY.floatValue = 0f
                     }
 
-                    // Sideways deadzone
                     if (kotlin.math.abs(linearX) > 0.05f) {
                         accelX.floatValue = -linearX * sensitivity.floatValue * 8f
                     } else {
@@ -134,9 +119,7 @@ class VektorService : Service(), LifecycleRegistryOwner, SavedStateRegistryOwner
                     }
                 }
                 Sensor.TYPE_GYROSCOPE -> {
-                    // Gyroscope can be integrated here for rotational drift compensation
-                    val rotZ = event.values[2] // rotation around Z axis
-                    // Modify offsetX based on rotational velocity for centripetal correction
+                    val rotZ = event.values[2]
                     offsetX.floatValue += rotZ * sensitivity.floatValue * 0.5f
                 }
             }
@@ -161,13 +144,9 @@ class VektorService : Service(), LifecycleRegistryOwner, SavedStateRegistryOwner
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_START)
-        
-        // Reload settings if service is toggled/restarted
         loadSettings()
-
         val notification = createNotification()
         startForeground(NOTIFICATION_ID, notification)
-
         return START_STICKY
     }
 
@@ -176,21 +155,14 @@ class VektorService : Service(), LifecycleRegistryOwner, SavedStateRegistryOwner
     override fun onDestroy() {
         super.onDestroy()
         lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_DESTROY)
-        
-        // Unregister settings listener
         val prefs = getSharedPreferences("vektor_settings", MODE_PRIVATE)
         prefs.unregisterOnSharedPreferenceChangeListener(prefsListener)
-        
-        // Unregister sensors
         sensorManager?.unregisterListener(sensorListener)
-
-        // Remove overlay window
         windowManager?.let { wm ->
             overlayView?.let { view ->
                 wm.removeView(view)
             }
         }
-        
         store.clear()
         isRunning = false
     }
@@ -207,14 +179,12 @@ class VektorService : Service(), LifecycleRegistryOwner, SavedStateRegistryOwner
         sensorManager = getSystemService(SENSOR_SERVICE) as SensorManager
         accelerometer = sensorManager?.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
         gyroscope = sensorManager?.getDefaultSensor(Sensor.TYPE_GYROSCOPE)
-
         sensorManager?.registerListener(sensorListener, accelerometer, SensorManager.SENSOR_DELAY_UI)
         sensorManager?.registerListener(sensorListener, gyroscope, SensorManager.SENSOR_DELAY_UI)
     }
 
     private fun showOverlay() {
         windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
-
         val params = WindowManager.LayoutParams(
             WindowManager.LayoutParams.MATCH_PARENT,
             WindowManager.LayoutParams.MATCH_PARENT,
@@ -236,32 +206,22 @@ class VektorService : Service(), LifecycleRegistryOwner, SavedStateRegistryOwner
         }
 
         overlayView = ComposeView(this).apply {
-            // Supply necessary owners to ComposeView
             setViewTreeLifecycleOwner(this@VektorService)
             setViewTreeViewModelStoreOwner(this@VektorService)
             setViewTreeSavedStateRegistryOwner(this@VektorService)
             
             setContent {
                 var lastTime by remember { mutableLongStateOf(0L) }
-                
                 LaunchedEffect(Unit) {
                     while (true) {
                         withFrameNanos { time ->
                             if (lastTime != 0L) {
                                 val dt = (time - lastTime) / 1e9f
-                                
-                                // Momentum-based flow: Acceleration adds to velocity, velocity decays
-                                // Deceleration is aggressive when no acceleration is present to prevent drift
                                 val friction = if (accelX.floatValue == 0f && accelY.floatValue == 0f) 0.85f else 0.96f
-                                
                                 velocityX.floatValue = (velocityX.floatValue + accelX.floatValue * dt) * friction
                                 velocityY.floatValue = (velocityY.floatValue + accelY.floatValue * dt) * friction
-
-                                // Continuously scroll the dots based on current velocity
                                 offsetX.floatValue += velocityX.floatValue * dt
                                 offsetY.floatValue += velocityY.floatValue * dt
-                                
-                                // Reset horizontal position gently if it drifted too far and we are stationary
                                 if (accelX.floatValue == 0f && kotlin.math.abs(velocityX.floatValue) < 0.1f) {
                                     offsetX.floatValue *= 0.95f
                                 }
@@ -280,7 +240,6 @@ class VektorService : Service(), LifecycleRegistryOwner, SavedStateRegistryOwner
                 )
             }
         }
-
         windowManager?.addView(overlayView, params)
     }
 
@@ -290,7 +249,6 @@ class VektorService : Service(), LifecycleRegistryOwner, SavedStateRegistryOwner
             this, 0, notificationIntent,
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
-
         return NotificationCompat.Builder(this, VektorApplication.CHANNEL_ID)
             .setContentTitle(getString(R.string.service_notification_title))
             .setContentText(getString(R.string.service_notification_description))
@@ -325,73 +283,111 @@ fun MotionOverlayCanvas(
         val width = size.width
         val height = size.height
 
-        // Final measurements from reference video analysis:
+        // Measurements and tuning for 1:1 reference parity
         val verticalSpacingPx = 140 * density
         val columnSpacingPx = 45 * density
         val sidePaddingPx = 35 * density
-        
-        // Horizontal constraint: Exactly 2 columns wide
         val sideZoneWidth = columnSpacingPx * 2
         
-        // Turning shifts the tracks, but we will CLIP the dots 
-        // to stay strictly within the left and right side gutters.
-        val lateralShift = offsetX
+        // Horizontal Movement: wrap field shift within the side zone
+        val hWrapWidth = sideZoneWidth
+        val hShift = (offsetX % hWrapWidth + hWrapWidth) % hWrapWidth
 
-        // Define the fixed "Gutter" areas where dots are allowed to appear.
-        // These never move, preventing dots from invading the center or leaving edges.
-        val leftGutter = androidx.compose.ui.geometry.Rect(0f, 0f, sidePaddingPx + sideZoneWidth, height)
-        val rightGutter = androidx.compose.ui.geometry.Rect(width - (sidePaddingPx + sideZoneWidth), 0f, width, height)
+        // Define hardware clipping areas for side tracks
+        val leftClip = androidx.compose.ui.geometry.Rect(0f, 0f, sidePaddingPx + sideZoneWidth, height)
+        val rightClip = androidx.compose.ui.geometry.Rect(width - (sidePaddingPx + sideZoneWidth), 0f, width, height)
 
-        // Render Left Side
-        clipRect(leftGutter.left, leftGutter.top, leftGutter.right, leftGutter.bottom) {
-            for (track in 0..1) {
-                val trackX = sidePaddingPx + (track * columnSpacingPx) + lateralShift
-                val trackYStagger = if (track % 2 != 0) verticalSpacingPx / 2f else 0f
-                renderInfiniteTrack(trackX, offsetY, verticalSpacingPx, height, finalColor, dotSize, trackYStagger)
+        // Draw Left Side
+        clipRect(leftClip.left, leftClip.top, leftClip.right, leftClip.bottom) {
+            for (track in 0 until 2) {
+                val baseX = sidePaddingPx + (track * columnSpacingPx)
+                // Wrap horizontal position per track within side zone
+                val wrappedX = ((baseX + hShift - sidePaddingPx) % hWrapWidth + hWrapWidth) % hWrapWidth + sidePaddingPx
+                
+                // Vertical Staggering (Checkerboard pattern)
+                val stagger = if (track % 2 != 0) verticalSpacingPx / 2f else 0f
+                
+                renderContinuousTrack(wrappedX, offsetY, verticalSpacingPx, height, finalColor, dotSize, stagger, leftClip)
+                renderContinuousTrack(wrappedX - hWrapWidth, offsetY, verticalSpacingPx, height, finalColor, dotSize, stagger, leftClip)
             }
         }
 
-        // Render Right Side
-        clipRect(rightGutter.left, rightGutter.top, rightGutter.right, rightGutter.bottom) {
-            for (track in 0..1) {
-                val trackX = (width - sidePaddingPx - (track * columnSpacingPx)) + lateralShift
-                val trackYStagger = if (track % 2 != 0) verticalSpacingPx / 2f else 0f
-                renderInfiniteTrack(trackX, offsetY, verticalSpacingPx, height, finalColor, dotSize, trackYStagger)
+        // Draw Right Side (Perfect Symmetry)
+        clipRect(rightClip.left, rightClip.top, rightClip.right, rightClip.bottom) {
+            val rightInnerEdge = width - sidePaddingPx - sideZoneWidth
+            for (track in 0 until 2) {
+                // Mirror positions from the right edge
+                val baseX = (width - sidePaddingPx) - (track * columnSpacingPx)
+                // Wrap horizontal position per track within side zone
+                val wrappedX = ((baseX + hShift - rightInnerEdge) % hWrapWidth + hWrapWidth) % hWrapWidth + rightInnerEdge
+                
+                val stagger = if (track % 2 != 0) verticalSpacingPx / 2f else 0f
+                
+                renderContinuousTrack(wrappedX, offsetY, verticalSpacingPx, height, finalColor, dotSize, stagger, rightClip)
+                renderContinuousTrack(wrappedX - hWrapWidth, offsetY, verticalSpacingPx, height, finalColor, dotSize, stagger, rightClip)
+                renderContinuousTrack(wrappedX + hWrapWidth, offsetY, verticalSpacingPx, height, finalColor, dotSize, stagger, rightClip)
             }
         }
     }
 }
 
 /**
- * Renders a vertical line of dots that loops infinitely within vertical spacing.
+ * Renders a vertical line of dots with 2D alpha fading for smooth appearance/disappearance
  */
-private fun DrawScope.renderInfiniteTrack(
+private fun DrawScope.renderContinuousTrack(
     baseX: Float,
     yOffset: Float,
     spacingPx: Float,
     height: Float,
     color: Color,
     dotSize: Float,
-    stagger: Float
+    stagger: Float,
+    clipRect: androidx.compose.ui.geometry.Rect
 ) {
-    // Local modulo loop for seamless vertical movement
     val localScrollY = (yOffset % spacingPx + spacingPx) % spacingPx
     
     var y = -spacingPx
     while (y < height + spacingPx) {
         val drawY = y + localScrollY + stagger
         
-        // Visual Style: Small sharp dot with subtle outer glow
-        drawCircle(
-            color = color.copy(alpha = color.alpha * 0.2f),
-            radius = dotSize * 0.7f,
-            center = Offset(baseX, drawY)
-        )
-        drawCircle(
-            color = color,
-            radius = dotSize / 2,
-            center = Offset(baseX, drawY)
-        )
+        // Appearance/Disappearance Fading (2D)
+        val vMargin = 150f
+        val hMargin = 25f
+        
+        val vAlpha = when {
+            drawY < vMargin -> (drawY / vMargin).coerceIn(0f, 1f)
+            drawY > height - vMargin -> ((height - drawY) / vMargin).coerceIn(0f, 1f)
+            else -> 1f
+        }
+        
+        val hDistFromLeft = baseX - clipRect.left
+        val hDistFromRight = clipRect.right - baseX
+        val hAlpha = (kotlin.math.min(hDistFromLeft, hDistFromRight) / hMargin).coerceIn(0f, 1f)
+        
+        val totalAlpha = color.alpha * vAlpha * hAlpha
+        if (totalAlpha > 0.01f) {
+            val drawColor = color.copy(alpha = totalAlpha)
+            
+            // Professional triple-layer "Shiny" Dot
+            // 1. Halo
+            drawCircle(
+                color = drawColor.copy(alpha = totalAlpha * 0.15f),
+                radius = dotSize * 0.75f,
+                center = Offset(baseX, drawY)
+            )
+            // 2. Shiny border
+            drawCircle(
+                color = drawColor.copy(alpha = totalAlpha * 0.4f),
+                radius = dotSize * 0.55f,
+                center = Offset(baseX, drawY)
+            )
+            // 3. Core
+            drawCircle(
+                color = drawColor,
+                radius = dotSize / 2,
+                center = Offset(baseX, drawY)
+            )
+        }
         y += spacingPx
     }
 }
