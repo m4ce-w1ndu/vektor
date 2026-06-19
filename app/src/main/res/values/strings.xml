@@ -18,6 +18,7 @@
     <string name="dot_size">Dot Size</string>
     <string name="opacity">Opacity</string>
     <string name="motion_sensitivity">Motion Sensitivity</string>
+    <string name="side_margin">Side Margin</string>
     <string name="column_count">Column Count</string>
     <string name="columns_unit">cols</string>
 

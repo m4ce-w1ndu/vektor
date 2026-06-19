@@ -70,6 +70,7 @@ class VektorService : Service(), LifecycleRegistryOwner, SavedStateRegistryOwner
     private val dotColorValue = mutableLongStateOf(0xFF4FD8EB)
     private val dotOpacity = mutableFloatStateOf(0.6f)
     private val sensitivity = mutableFloatStateOf(35f)
+    private val sideMarginPx = mutableFloatStateOf(35f)
 
     private val prefsListener = android.content.SharedPreferences.OnSharedPreferenceChangeListener { _, _ ->
         loadSettings()
@@ -172,6 +173,7 @@ class VektorService : Service(), LifecycleRegistryOwner, SavedStateRegistryOwner
         dotSizePx.floatValue = prefs.getFloat("dot_size", 16f)
         dotOpacity.floatValue = prefs.getFloat("dot_opacity", 0.5f)
         sensitivity.floatValue = prefs.getFloat("sensitivity", 35f)
+        sideMarginPx.floatValue = prefs.getFloat("side_margin", 35f)
         dotColorValue.longValue = prefs.getLong("dot_color", 0xFF4FD8EB)
     }
 
@@ -236,6 +238,7 @@ class VektorService : Service(), LifecycleRegistryOwner, SavedStateRegistryOwner
                     offsetY = offsetY.floatValue,
                     dotSize = dotSizePx.floatValue,
                     dotOpacity = dotOpacity.floatValue,
+                    sideMargin = sideMarginPx.floatValue,
                     colorHex = dotColorValue.longValue
                 )
             }
@@ -274,6 +277,7 @@ fun MotionOverlayCanvas(
     offsetY: Float,
     dotSize: Float,
     dotOpacity: Float,
+    sideMargin: Float,
     colorHex: Long
 ) {
     val baseColor = Color(colorHex)
@@ -286,7 +290,7 @@ fun MotionOverlayCanvas(
         // Measurements and tuning for 1:1 reference parity
         val verticalSpacingPx = 140 * density
         val columnSpacingPx = 45 * density
-        val sidePaddingPx = 35 * density
+        val sidePaddingPx = sideMargin * density
         val sideZoneWidth = columnSpacingPx * 2
         
         // Horizontal Movement: wrap field shift within the side zone

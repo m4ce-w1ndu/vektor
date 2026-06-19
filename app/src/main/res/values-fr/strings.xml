@@ -17,7 +17,8 @@
     <string name="dot_color">Couleur des Points</string>
     <string name="dot_size">Taille des Points</string>
     <string name="opacity">Opacit\u00e9</string>
-    <string name="motion_sensitivity">Sensibilit\u00e9 au Mouvement</string>
+    <string name="motion_sensitivity">Sensibilité au Mouvement</string>
+    <string name="side_margin">Marge Latérale</string>
     <string name="column_count">Nombre de Colonnes</string>
     <string name="columns_unit">cols</string>
 

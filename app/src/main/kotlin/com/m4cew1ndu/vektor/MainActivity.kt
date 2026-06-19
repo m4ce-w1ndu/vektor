@@ -147,6 +147,7 @@ fun MainScreen(
     var dotSize by remember { mutableFloatStateOf(prefs.getFloat("dot_size", 16f)) }
     var dotOpacity by remember { mutableFloatStateOf(prefs.getFloat("dot_opacity", 0.5f)) }
     var sensitivity by remember { mutableFloatStateOf(prefs.getFloat("sensitivity", 35f)) }
+    var sideMargin by remember { mutableFloatStateOf(prefs.getFloat("side_margin", 35f)) }
     var dotColorHex by remember { mutableLongStateOf(prefs.getLong("dot_color", 0xFF4FD8EB)) }
 
     val colorsList = listOf(
@@ -415,6 +416,35 @@ fun MainScreen(
                                 prefs.edit { putFloat("sensitivity", newValue) }
                             },
                             valueRange = 5f..40f
+                        )
+                    }
+
+                    // Side Margin Slider
+                    Column {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = stringResource(R.string.side_margin),
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Text(
+                                text = "${sideMargin.roundToInt()} dp",
+                                fontSize = 13.sp,
+                                color = MaterialTheme.colorScheme.primary,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
+                        Slider(
+                            value = sideMargin,
+                            onValueChange = { newValue ->
+                                sideMargin = newValue
+                                prefs.edit { putFloat("side_margin", newValue) }
+                            },
+                            valueRange = 10f..120f
                         )
                     }
 

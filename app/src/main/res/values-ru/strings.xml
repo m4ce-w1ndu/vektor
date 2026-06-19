@@ -18,6 +18,7 @@
     <string name="dot_size">Размер точек</string>
     <string name="opacity">Прозрачность</string>
     <string name="motion_sensitivity">Чувствительность к движению</string>
+    <string name="side_margin">Боковой отступ</string>
     <string name="column_count">Количество столбцов</string>
     <string name="columns_unit">стлб.</string>
 
