@@ -102,13 +102,12 @@ class VektorService : Service(), LifecycleRegistryOwner, SavedStateRegistryOwner
                     val linearY = event.values[1] - gravityY
                     val linearZ = event.values[2] - gravityZ
 
-                    accelX.floatValue = -linearX * sensitivity.floatValue * 5f
-                    
                     // Unified Longitudinal Logic: Forward Accel -> Dots flow UP (-offsetY)
                     val longitudinalForce = -(linearY - linearZ)
                     
                     if (kotlin.math.abs(longitudinalForce) > 0.05f) {
-                        accelY.floatValue = longitudinalForce * sensitivity.floatValue * 40f
+                        // Adjusted multiplier for balanced vehicle motion sensitivity
+                        accelY.floatValue = longitudinalForce * sensitivity.floatValue * 80f
                     } else {
                         accelY.floatValue = 0f
                     }
